@@ -10,6 +10,10 @@
 #include <QDebug>
 #include <QCoreApplication>
 
+int ClashConfig::http_port = 7340;
+int ClashConfig::socks_port = 7341;
+std::string ClashConfig::control_url = "127.0.0.1:9090";
+
 bool ClashConfig::combineConfig() {
     QString config_path = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     QFile clash_config_file = QFile(config_path + "/clash-config.yaml");
@@ -48,7 +52,6 @@ bool ClashConfig::combineConfig() {
     if(not clash_config_file.open(QIODevice::ReadOnly)){
         return false;
     }
-
 
     QFile config_file(config_path + "/config.yaml");
     config_file.open(QIODevice::WriteOnly | QIODevice::Truncate);

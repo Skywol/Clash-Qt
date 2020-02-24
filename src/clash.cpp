@@ -35,8 +35,16 @@ void Clash::start() {
     if(not QFile(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/config.yaml").exists()){
         ClashConfig::combineConfig();
     }
+
+    //update clash config information
+    YAML::Node clash_config_node = YAML::LoadFile(
+            (QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/config.yaml").toStdString()
+            );
+    ClashConfig::http_port = clash_config_node["port"].as<int>();
+    ClashConfig::socks_port = clash_config_node["socks-port"].as<int>();
+    ClashConfig::control_url = clash_config_node["external-controller"].as<std::string>();
+
     if(not QFile(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/Country.mmdb").exists()){
-        qDebug()<<"YYY";
         ClashConfig::genreateCountryDB();
     }
     if(proc != nullptr){

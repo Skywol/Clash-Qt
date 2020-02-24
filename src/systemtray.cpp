@@ -5,7 +5,9 @@
 #include "systemtray.h"
 #include <QDebug>
 #include <QMenu>
+#include <QApplication>
 #include <QTextEdit>
+#include <QClipboard>
 SystemTray::SystemTray(){
     clash.start();
     setIcon(QIcon(":/icon/clash.png"));
@@ -74,5 +76,6 @@ void SystemTray::initMenu() {
 }
 
 void SystemTray::copyCommand() {
-
+    QString command = "export https_proxy=http://127.0.0.1:%1;export http_proxy=http://127.0.0.1:%1;export all_proxy=socks5://127.0.0.1:%2;";
+    QApplication::clipboard()->setText(command.arg(ClashConfig::http_port).arg(ClashConfig::socks_port));
 }
