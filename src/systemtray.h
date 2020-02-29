@@ -8,6 +8,8 @@
 
 class QMenu;
 class QTextEdit;
+class SubscribeManager;
+
 class SystemTray : public QSystemTrayIcon{
     Q_OBJECT
 public:
@@ -19,6 +21,7 @@ private:
     inline void initMenu();
 
     MainWindow w;
+    SubscribeManager *subscribe;
     Clash clash;
     QMenu *menu;
     QTextEdit *clash_output;

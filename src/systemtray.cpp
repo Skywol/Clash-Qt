@@ -1,15 +1,13 @@
-//
-// Created by cyril on 2020/2/22.
-//
-
 #include "systemtray.h"
+#include "subscribemanager.h"
 #include <QDebug>
 #include <QMenu>
 #include <QApplication>
 #include <QTextEdit>
 #include <QClipboard>
+
 SystemTray::SystemTray(){
-    clash.start();
+    //clash.start();
     setIcon(QIcon(":/icon/clash.png"));
     menu = new QMenu();
     initMenu();
@@ -19,6 +17,12 @@ SystemTray::SystemTray(){
     clash_output->setWindowTitle(tr("Clash Core Log"));
     clash_output->resize(600, 700);
     connect(&clash, &Clash::readyRead, this, [this](QByteArray data){clash_output->append(data);});
+
+    subscribe = new SubscribeManager();
+    subscribe->show();
+    connect(subscribe, &SubscribeManager::updateFinish, this, [this](int suc, int err){
+        this->showMessage(tr("Update Finished"), tr("%1 succeed, %2 failed").arg(suc).arg(err));
+    });
 }
 
 void SystemTray::onTrayClicked(QSystemTrayIcon::ActivationReason reason) {
@@ -55,6 +59,7 @@ void SystemTray::initMenu() {
 
     QMenu *subscribeMenu = new QMenu(tr("Subscribe"));
     QAction *mangeSubscribeAction = new QAction(tr("Manage"));
+    connect(mangeSubscribeAction, &QAction::triggered, this, [this]{subscribe->show();});
     QAction *updateSubscribeAction = new QAction(tr("Update"));
     subscribeMenu->addAction(mangeSubscribeAction);
     subscribeMenu->addAction(updateSubscribeAction);
