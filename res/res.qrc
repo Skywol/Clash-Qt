@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>icon/clash.png</file>
+        <file>icon/delete.png</file>
         <file>default/clash-config.yaml</file>
         <file>default/Country.mmdb</file>
     </qresource>

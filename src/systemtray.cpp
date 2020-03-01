@@ -7,7 +7,7 @@
 #include <QClipboard>
 
 SystemTray::SystemTray(){
-    //clash.start();
+    clash.start();
     setIcon(QIcon(":/icon/clash.png"));
     menu = new QMenu();
     initMenu();
@@ -19,9 +19,9 @@ SystemTray::SystemTray(){
     connect(&clash, &Clash::readyRead, this, [this](QByteArray data){clash_output->append(data);});
 
     subscribe = new SubscribeManager();
-    subscribe->show();
     connect(subscribe, &SubscribeManager::updateFinish, this, [this](int suc, int err){
         this->showMessage(tr("Update Finished"), tr("%1 succeed, %2 failed").arg(suc).arg(err));
+        clash.restart();
     });
 }
 
@@ -61,6 +61,7 @@ void SystemTray::initMenu() {
     QAction *mangeSubscribeAction = new QAction(tr("Manage"));
     connect(mangeSubscribeAction, &QAction::triggered, this, [this]{subscribe->show();});
     QAction *updateSubscribeAction = new QAction(tr("Update"));
+    connect(updateSubscribeAction, &QAction::triggered, this, [this]{subscribe->updateSubscribe();})
     subscribeMenu->addAction(mangeSubscribeAction);
     subscribeMenu->addAction(updateSubscribeAction);
     menu->addMenu(subscribeMenu);
@@ -76,11 +77,15 @@ void SystemTray::initMenu() {
 
     menu->addSeparator();
     QAction *quitAction = new QAction(tr("Quit"));
-    connect(quitAction, &QAction::triggered, this, []{exit(0);});
+    connect(quitAction, &QAction::triggered, this, [this]{clash.stop();exit(0);});
     menu->addAction(quitAction);
 }
 
 void SystemTray::copyCommand() {
     QString command = "export https_proxy=http://127.0.0.1:%1;export http_proxy=http://127.0.0.1:%1;export all_proxy=socks5://127.0.0.1:%2;";
     QApplication::clipboard()->setText(command.arg(ClashConfig::http_port).arg(ClashConfig::socks_port));
+}
+
+SystemTray::~SystemTray() {
+    delete subscribe;
 }

@@ -13,6 +13,7 @@ signals:
 public:
     Clash();
     void start();
+    void stop();
     static void generateConfig();
     void restart();
 private:

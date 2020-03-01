@@ -61,3 +61,7 @@ void Clash::restart() {
         proc->start();
     }
 }
+
+void Clash::stop() {
+    proc->terminate();
+}

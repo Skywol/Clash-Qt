@@ -24,6 +24,13 @@ public:
     void updateSubscribe();
     void addSubscribe();
 
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
+public:
+    void loadSubscribe();
+    void saveSubscribe();
+
 private:
     Ui::SubscribeManager *ui;
     ProfileModel *model;
@@ -42,6 +49,7 @@ public:
     void removeSubscribe(int row);
 
     QStringList getSubscribeUrl();
+    const QList<QPair<QString, QString>> &getSubscribe();
 private:
     QList<QPair<QString, QString>> profiles;
 };

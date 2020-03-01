@@ -15,6 +15,7 @@ SubscribeManager::SubscribeManager(QWidget *parent) :
     ui(new Ui::SubscribeManager)
 {
     ui->setupUi(this);
+    ui->delBtn->setIcon(QIcon(":/icon/delete.png"));
     model = new ProfileModel;
     ui->subscribeTable->setModel(model);
     ui->subscribeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -23,6 +24,9 @@ SubscribeManager::SubscribeManager(QWidget *parent) :
     ui->subscribeTable->horizontalHeader()->setStretchLastSection(true);
 
     updateThread = new UpdateThread();
+
+    loadSubscribe();
+
     connect(updateThread, &UpdateThread::updateFinished, this,
             [this](int success, int err){emit updateFinish(success,err);});
     connect(updateThread, &UpdateThread::started, this, [this]{ui->updateBtn->setEnabled(false);});
@@ -30,6 +34,9 @@ SubscribeManager::SubscribeManager(QWidget *parent) :
 
     connect(ui->updateBtn, &QPushButton::clicked, this, &SubscribeManager::updateSubscribe);
     connect(ui->addBtn, &QPushButton::clicked, this, &SubscribeManager::addSubscribe);
+    connect(ui->delBtn, &QPushButton::clicked, this, [this]{
+        this->model->removeSubscribe(ui->subscribeTable->currentIndex().row());
+    });
 }
 
 SubscribeManager::~SubscribeManager()
@@ -49,7 +56,41 @@ void SubscribeManager::addSubscribe() {
         QMessageBox::warning(this, tr("Url Error"), tr("Input url is not valid!"));
         return;
     }
+    ui->inputUrl->clear();
     model->addSubscribe(url.host(), url_str);
+}
+
+void SubscribeManager::loadSubscribe() {
+    QString filename = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/subscribe-list.yaml";
+    if(!QFile().exists(filename)){ return;}
+    YAML::Node subscribeList = YAML::LoadFile(filename.toStdString());
+    for(auto node:subscribeList){
+        QString name = QString::fromStdString(node["name"].as<std::string>());
+        QString url = QString::fromStdString(node["url"].as<std::string>());
+        model->addSubscribe(name, url);
+    }
+}
+
+void SubscribeManager::saveSubscribe() {
+    QFile file(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/subscribe-list.yaml");
+    file.open(QIODevice::WriteOnly | QIODevice::Truncate);
+    QTextStream out(&file);
+    YAML::Emitter emitter;
+    auto list=model->getSubscribe();
+    YAML::Node nodeList;
+    for(auto subscribe:list){
+        YAML::Node node;
+        node["name"]=subscribe.first.toStdString();
+        node["url"]=subscribe.second.toStdString();
+        nodeList.push_back(node);
+    }
+    emitter<<nodeList;
+    out<<QString(emitter.c_str());
+}
+
+void SubscribeManager::closeEvent(QCloseEvent *event) {
+    saveSubscribe();
+    QDialog::closeEvent(event);
 }
 
 int ProfileModel::rowCount(const QModelIndex &parent) const {
@@ -101,6 +142,10 @@ QStringList ProfileModel::getSubscribeUrl() {
         urls.append(profile.second);
     }
     return urls;
+}
+
+const QList<QPair<QString, QString>> &ProfileModel::getSubscribe() {
+    return profiles;
 }
 
 UpdateThread::UpdateThread() {

@@ -14,6 +14,7 @@ class SystemTray : public QSystemTrayIcon{
     Q_OBJECT
 public:
     SystemTray();
+    ~SystemTray();
     void onTrayClicked(QSystemTrayIcon::ActivationReason reason);
     void copyCommand();
 
