@@ -1,11 +1,14 @@
 #include "subscribemanager.h"
 #include "ui_subscribemanager.h"
-#include <QDebug>
+#include "clashconfig.h"
 #include <QUrl>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <yaml-cpp/yaml.h>
+#include <QStandardPaths>
+#include <QtCore/QFile>
 
 SubscribeManager::SubscribeManager(QWidget *parent) :
     QDialog(parent),
@@ -100,9 +103,16 @@ QStringList ProfileModel::getSubscribeUrl() {
     return urls;
 }
 
+UpdateThread::UpdateThread() {
+    networkAccessManager = new QNetworkAccessManager;
+    networkAccessManager->moveToThread(this);
+}
+
 void UpdateThread::run() {
-    QNetworkAccessManager *networkAccessManager = new QNetworkAccessManager;
     QList<QPair<QString,QString>> errorList;
+    YAML::Node proxy;
+    YAML::Node proxy_group;
+    YAML::Node rules;
     for(const auto& url:urls){
         QNetworkReply *reply = networkAccessManager->get(QNetworkRequest(QUrl(url)));
         QEventLoop loop;
@@ -111,16 +121,23 @@ void UpdateThread::run() {
         if(reply->error()){
             errorList.append(QPair(url, reply->errorString()));
         } else{
-            QByteArray data=reply->readAll();
-            qDebug()<<data;
+            ClashConfig::loadProfileFromString(reply->readAll(), proxy, proxy_group, rules);
         }
         reply->deleteLater();
     }
+    QFile subscribeFile(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/subscribe.yaml");
+    subscribeFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
+    QTextStream out(&subscribeFile);
+    YAML::Node node;
+    node["Proxy"]=proxy;
+    node["Proxy Group"]=proxy_group;
+    node["Rule"] = rules;
+    YAML::Emitter emitter;
+    emitter<<node;
+    out<<QString(emitter.c_str());
     emit updateFinished(urls.size()-errorList.size(), errorList.size());
-    delete networkAccessManager;
 }
 
 void UpdateThread::setUrlList(QStringList urls) {
     this->urls = urls;
 }
-

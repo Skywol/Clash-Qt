@@ -53,6 +53,7 @@ class UpdateThread:public QThread
 signals:
     void updateFinished(int success, int err);
 public:
+    UpdateThread();
     void setUrlList(QStringList urls);
 
 protected:
@@ -60,5 +61,6 @@ protected:
 
 private:
     QStringList urls;
+    QNetworkAccessManager *networkAccessManager;
 };
 #endif // SUBSCRIBEMANAGER_H
