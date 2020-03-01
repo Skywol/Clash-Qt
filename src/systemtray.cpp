@@ -61,7 +61,7 @@ void SystemTray::initMenu() {
     QAction *mangeSubscribeAction = new QAction(tr("Manage"));
     connect(mangeSubscribeAction, &QAction::triggered, this, [this]{subscribe->show();});
     QAction *updateSubscribeAction = new QAction(tr("Update"));
-    connect(updateSubscribeAction, &QAction::triggered, this, [this]{subscribe->updateSubscribe();})
+    connect(updateSubscribeAction, &QAction::triggered, this, [this]{subscribe->updateSubscribe();});
     subscribeMenu->addAction(mangeSubscribeAction);
     subscribeMenu->addAction(updateSubscribeAction);
     menu->addMenu(subscribeMenu);
