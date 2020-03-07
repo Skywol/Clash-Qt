@@ -8,8 +8,11 @@
 int main(int argc, char *argv[]) {
 
     QApplication a(argc, argv);
-
+#ifdef DEBUG
+    a.setApplicationName("Clash-Qt-Debug");
+#else
     a.setApplicationName("Clash-Qt");
+#endif
     a.setWindowIcon(QIcon(":/icon/clash.png"));
     a.setQuitOnLastWindowClosed(false);
 

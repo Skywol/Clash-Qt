@@ -7,7 +7,9 @@
 #include <QClipboard>
 
 SystemTray::SystemTray(){
+#ifndef DEBUG
     clash.start();
+#endif
     setIcon(QIcon(":/icon/clash.png"));
     menu = new QMenu();
     initMenu();
@@ -31,6 +33,7 @@ void SystemTray::onTrayClicked(QSystemTrayIcon::ActivationReason reason) {
         case QSystemTrayIcon::DoubleClick:
             w.reload();
             w.show();
+            w.setFocus();
             break;
         case QSystemTrayIcon::MiddleClick:
             copyCommand();
@@ -45,38 +48,39 @@ void SystemTray::onTrayClicked(QSystemTrayIcon::ActivationReason reason) {
 void SystemTray::initMenu() {
     setContextMenu(menu);
 
-    QAction *showWindow = new QAction(tr("Show Clash-Qt"));
+    auto *showWindow = new QAction(tr("Show Clash-Qt"));
     connect(showWindow, &QAction::triggered, this, [this]{this->w.show();});
     menu->addAction(showWindow);
     menu->addSeparator();
 
-    QAction *restartClashAction = new QAction(tr("Restart Clash Core"));
+    auto *restartClashAction = new QAction(tr("Restart Clash Core"));
     connect(restartClashAction, &QAction::triggered, this, [this]{
         clash.restart();
         w.reload();
     });
     menu->addAction(restartClashAction);
 
-    QMenu *subscribeMenu = new QMenu(tr("Subscribe"));
-    QAction *mangeSubscribeAction = new QAction(tr("Manage"));
+    auto *subscribeMenu = new QMenu(tr("Subscribe"));
+    auto *mangeSubscribeAction = new QAction(tr("Manage"));
     connect(mangeSubscribeAction, &QAction::triggered, this, [this]{subscribe->show();});
-    QAction *updateSubscribeAction = new QAction(tr("Update"));
+    auto *updateSubscribeAction = new QAction(tr("Update"));
     connect(updateSubscribeAction, &QAction::triggered, this, [this]{subscribe->updateSubscribe();});
     subscribeMenu->addAction(mangeSubscribeAction);
     subscribeMenu->addAction(updateSubscribeAction);
     menu->addMenu(subscribeMenu);
 
-    QAction *copyCommandAction = new QAction(tr("Copy Proxy Command"));
+    auto *copyCommandAction = new QAction(tr("Copy Proxy Command"));
+    connect(copyCommandAction, &QAction::triggered, this, &SystemTray::copyCommand);
     menu->addAction(copyCommandAction);
 
-    QMenu *helpMenu = new QMenu(tr("Help"));
-    QAction *clash_log_action = new QAction(tr("Show Clash Core Log"));
+    auto *helpMenu = new QMenu(tr("Help"));
+    auto *clash_log_action = new QAction(tr("Show Clash Core Log"));
     connect(clash_log_action, &QAction::triggered, this, [this]{clash_output->show();});
     helpMenu->addAction(clash_log_action);
     menu->addMenu(helpMenu);
 
     menu->addSeparator();
-    QAction *quitAction = new QAction(tr("Quit"));
+    auto *quitAction = new QAction(tr("Quit"));
     connect(quitAction, &QAction::triggered, this, [this]{clash.stop();exit(0);});
     menu->addAction(quitAction);
 }
