@@ -19,6 +19,7 @@ set(src_files
         src/clash.cpp src/clash.h
         src/clashconfig.cpp src/clashconfig.h
         src/subscribemanager.h src/subscribemanager.cpp
+        src/editdialog.h src/editdialog.cpp
         )
 
 set(res_files res/res.qrc)

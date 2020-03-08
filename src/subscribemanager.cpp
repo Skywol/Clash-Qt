@@ -1,6 +1,7 @@
 #include "subscribemanager.h"
 #include "ui_subscribemanager.h"
 #include "clashconfig.h"
+#include "editdialog.h"
 #include <QUrl>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
@@ -27,6 +28,7 @@ SubscribeManager::SubscribeManager(QWidget *parent) :
 
     loadSubscribe();
 
+    connect(ui->subscribeTable, &QTableView::doubleClicked, this, [this](QModelIndex index){this->model->editRow(index.row());});
     connect(updateThread, &UpdateThread::updateFinished, this,
             [this](int success, int err){emit updateFinish(success,err);});
     connect(updateThread, &UpdateThread::started, this, [this]{ui->updateBtn->setEnabled(false);});
@@ -52,7 +54,7 @@ void SubscribeManager::updateSubscribe() {
 void SubscribeManager::addSubscribe() {
     QString url_str = ui->inputUrl->text();
     QUrl url(url_str);
-    if(url.host().isEmpty() || !url.scheme().contains("http", Qt::CaseInsensitive)){
+    if(url.isEmpty() || url.scheme().isEmpty() || url.host().isEmpty() ){
         QMessageBox::warning(this, tr("Url Error"), tr("Input url is not valid!"));
         return;
     }
@@ -146,6 +148,19 @@ QStringList ProfileModel::getSubscribeUrl() {
 
 const QList<QPair<QString, QString>> &ProfileModel::getSubscribe() {
     return profiles;
+}
+
+void ProfileModel::editRow(int row) {
+    QPair<QString, QString> &data = profiles[row];
+    editDialog->setData(data.first,data.second);
+    if(editDialog->exec() == QDialog::Accepted){
+        data = editDialog->getData();
+        emit dataChanged(this->index(row,0), this->index(row,1));
+    }
+}
+
+ProfileModel::ProfileModel() :QAbstractTableModel(){
+    editDialog = new EditDialog;
 }
 
 UpdateThread::UpdateThread() {

@@ -11,6 +11,7 @@ class SubscribeManager;
 
 class ProfileModel;
 class UpdateThread;
+class EditDialog;
 
 class SubscribeManager : public QDialog
 {
@@ -40,6 +41,7 @@ private:
 class ProfileModel: public QAbstractTableModel
 {
 public:
+    ProfileModel();
     int rowCount(const QModelIndex &parent) const override;
     int columnCount(const QModelIndex &parent) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
@@ -50,8 +52,10 @@ public:
 
     QStringList getSubscribeUrl();
     const QList<QPair<QString, QString>> &getSubscribe();
+    void editRow(int row);
 private:
     QList<QPair<QString, QString>> profiles;
+    EditDialog *editDialog;
 };
 
 class QNetworkAccessManager;
