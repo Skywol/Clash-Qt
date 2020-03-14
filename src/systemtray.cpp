@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <QTextEdit>
 #include <QClipboard>
+#include <QElapsedTimer>
 
 SystemTray::SystemTray(){
 #ifndef DEBUG
@@ -20,8 +21,16 @@ SystemTray::SystemTray(){
     clash_output->setWindowTitle(tr("Clash Core Log"));
     clash_output->resize(600, 700);
     connect(&clash, &Clash::readyRead, this, [this](QByteArray data){clash_output->append(data);});
-    
-    connect(&clash, &Clash::clashStarted, this, [this]{w.reload();});
+
+    connect(&clash, &Clash::clashStarted, this, [this]{
+        QElapsedTimer t;
+        t.start();
+        // wait 1 sec to wait clash finish starting.
+        while(t.elapsed()<1000){
+            QCoreApplication::processEvents(); // Handle event when in loop
+        }
+        w.reload();
+    });
     subscribe = new SubscribeManager();
     connect(subscribe, &SubscribeManager::updateFinish, this, [this](int suc, int err){
         this->showMessage(tr("Update Finished"), tr("%1 succeed, %2 failed").arg(suc).arg(err));
@@ -87,8 +96,10 @@ void SystemTray::initMenu() {
 }
 
 void SystemTray::copyCommand() {
-    QString command = "export https_proxy=http://127.0.0.1:%1;export http_proxy=http://127.0.0.1:%1;export all_proxy=socks5://127.0.0.1:%2;";
-    QApplication::clipboard()->setText(command.arg(ClashConfig::http_port).arg(ClashConfig::socks_port));
+    QString command = QString("export https_proxy=http://127.0.0.1:%1;export http_proxy=http://127.0.0.1:%1;export all_proxy=socks5://127.0.0.1:%2;")
+            .arg(ClashConfig::http_port).arg(ClashConfig::socks_port);
+    QApplication::clipboard()->setText(command);
+    qDebug()<<QApplication::clipboard()->text();
 }
 
 SystemTray::~SystemTray() {
