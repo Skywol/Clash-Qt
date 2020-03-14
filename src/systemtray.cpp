@@ -15,11 +15,13 @@ SystemTray::SystemTray(){
     initMenu();
     connect(this, &QSystemTrayIcon::activated, this, &SystemTray::onTrayClicked);
 
+    //Clash-Core Log
     clash_output = new QTextEdit();
     clash_output->setWindowTitle(tr("Clash Core Log"));
     clash_output->resize(600, 700);
     connect(&clash, &Clash::readyRead, this, [this](QByteArray data){clash_output->append(data);});
-
+    
+    connect(&clash, &Clash::clashStarted, this, [this]{w.reload();});
     subscribe = new SubscribeManager();
     connect(subscribe, &SubscribeManager::updateFinish, this, [this](int suc, int err){
         this->showMessage(tr("Update Finished"), tr("%1 succeed, %2 failed").arg(suc).arg(err));
@@ -31,7 +33,6 @@ void SystemTray::onTrayClicked(QSystemTrayIcon::ActivationReason reason) {
     switch(reason){
         case QSystemTrayIcon::Trigger:
         case QSystemTrayIcon::DoubleClick:
-            w.reload();
             w.show();
             w.setFocus();
             break;
@@ -62,7 +63,7 @@ void SystemTray::initMenu() {
 
     auto *subscribeMenu = new QMenu(tr("Subscribe"));
     auto *mangeSubscribeAction = new QAction(tr("Manage"));
-    connect(mangeSubscribeAction, &QAction::triggered, this, [this]{subscribe->show();});
+    connect(mangeSubscribeAction, &QAction::triggered, this, [this]{subscribe->show();subscribe->setFocus();});
     auto *updateSubscribeAction = new QAction(tr("Update"));
     connect(updateSubscribeAction, &QAction::triggered, this, [this]{subscribe->updateSubscribe();});
     subscribeMenu->addAction(mangeSubscribeAction);

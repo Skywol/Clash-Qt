@@ -10,53 +10,52 @@
 #include <QDebug>
 #include <QCoreApplication>
 
-int ClashConfig::http_port = 7340;
-int ClashConfig::socks_port = 7341;
-std::string ClashConfig::control_url = "127.0.0.1:9090";
+int ClashConfig::http_port = 7890;
+int ClashConfig::socks_port = 7891;
 
-void ClashConfig::loadProfileFromFile(QString filename, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules){
-    if(!QFile().exists(filename)){
+void ClashConfig::loadProfileFromFile(const QString& filename, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules){
+    if(!QFile::exists(filename)){
         return;
     }
     try {
         YAML::Node node = YAML::LoadFile(filename.toStdString());
         YAML::Node proxyList = node["Proxy"];
-        for (auto profile:proxyList) {
+        for (const auto& profile:proxyList) {
             proxy.push_back(profile);
         }
 
         YAML::Node groupList = node["Proxy Group"];
-        for (auto group: groupList) {
+        for (const auto& group: groupList) {
             proxy_group.push_back(group);
         }
         YAML::Node rule_list = node["Rule"];
-        for (auto rule:rule_list){
+        for (const auto& rule:rule_list){
             rules.push_back(rule);
         }
-    } catch (YAML::Exception e){
+    } catch (YAML::Exception &e){
         qDebug()
             <<QString("YAML-CPP(line %1, column %2): ").arg(e.mark.line).arg(e.mark.column)
             <<QString::fromStdString(e.msg);
     }
 }
 
-void ClashConfig::loadProfileFromString(QString data, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules){
+void ClashConfig::loadProfileFromString(const QString& data, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules){
     try {
         YAML::Node node = YAML::Load(data.toStdString());
         YAML::Node proxyList = node["Proxy"];
-        for (auto profile:proxyList) {
+        for (const auto& profile:proxyList) {
             proxy.push_back(profile);
         }
 
         YAML::Node groupList = node["Proxy Group"];
-        for (auto group: groupList) {
+        for (const auto& group: groupList) {
             proxy_group.push_back(group);
         }
         YAML::Node rule_list = node["Rule"];
-        for (auto rule:rule_list){
+        for (const auto& rule:rule_list){
             rules.push_back(rule);
         }
-    } catch (YAML::Exception e){
+    } catch (YAML::Exception &e){
         qDebug()
                 <<QString("YAML-CPP(line %1, column %2): ").arg(e.mark.line).arg(e.mark.column)
                 <<QString::fromStdString(e.msg);

@@ -64,7 +64,7 @@ void SubscribeManager::addSubscribe() {
 
 void SubscribeManager::loadSubscribe() {
     QString filename = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/subscribe-list.yaml";
-    if(!QFile().exists(filename)){ return;}
+    if(!QFile::exists(filename)){ return;}
     YAML::Node subscribeList = YAML::LoadFile(filename.toStdString());
     for(auto node:subscribeList){
         QString name = QString::fromStdString(node["name"].as<std::string>());
@@ -80,7 +80,7 @@ void SubscribeManager::saveSubscribe() {
     YAML::Emitter emitter;
     auto list=model->getSubscribe();
     YAML::Node nodeList;
-    for(auto subscribe:list){
+    for(const auto& subscribe:list){
         YAML::Node node;
         node["name"]=subscribe.first.toStdString();
         node["url"]=subscribe.second.toStdString();
@@ -140,7 +140,7 @@ void ProfileModel::removeSubscribe(int row) {
 
 QStringList ProfileModel::getSubscribeUrl() {
     QStringList urls;
-    for(auto profile:profiles){
+    for(const auto& profile:profiles){
         urls.append(profile.second);
     }
     return urls;

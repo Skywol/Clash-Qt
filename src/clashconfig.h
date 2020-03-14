@@ -11,8 +11,8 @@ public:
     static std::string control_url;
     static bool combineConfig();
     static void genreateCountryDB();
-    static void loadProfileFromFile(QString filename, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules);
-    static void loadProfileFromString(QString data, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules);
+    static void loadProfileFromFile(const QString& filename, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules);
+    static void loadProfileFromString(const QString& data, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules);
 };
 
 
