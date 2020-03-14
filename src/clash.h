@@ -10,11 +10,11 @@ class Clash : public QObject{
 signals:
     void errorHappened();
     void readyRead(QByteArray o);
+    void clashStarted();
 public:
     Clash();
     void start();
     void stop();
-    static void generateConfig();
     void restart();
 private:
     QProcess *proc;

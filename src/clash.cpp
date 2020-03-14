@@ -29,10 +29,11 @@ Clash::Clash() {
     connect(proc, &QProcess::readyRead, this, [this]{
         emit readyRead(proc->readAll());
     });
+    connect(proc, &QProcess::started, this, [this]{emit(clashStarted());});
 }
 
 void Clash::start() {
-    if(not QFile(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/config.yaml").exists()){
+    if(!QFile(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/config.yaml").exists()){
         ClashConfig::combineConfig();
     }
 
@@ -42,9 +43,9 @@ void Clash::start() {
             );
     ClashConfig::http_port = clash_config_node["port"].as<int>();
     ClashConfig::socks_port = clash_config_node["socks-port"].as<int>();
-    ClashConfig::control_url = clash_config_node["external-controller"].as<std::string>();
+    clash_config_node["external-controller"].as<std::string>();
 
-    if(not QFile(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/Country.mmdb").exists()){
+    if(!QFile(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/Country.mmdb").exists()){
         ClashConfig::genreateCountryDB();
     }
     if(proc != nullptr){
@@ -57,6 +58,7 @@ void Clash::restart() {
     if(proc != nullptr){
         if(proc->state() != QProcess::NotRunning ){
             proc->terminate();
+            proc->waitForFinished(1000);
         }
         proc->start();
     }
