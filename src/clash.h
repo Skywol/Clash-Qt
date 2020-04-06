@@ -13,6 +13,8 @@ signals:
     void clashStarted();
 public:
     Clash();
+    static void load();
+    void save();
     void start();
     void stop();
     void restart();

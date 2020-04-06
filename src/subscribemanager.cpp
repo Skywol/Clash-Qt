@@ -10,6 +10,7 @@
 #include <yaml-cpp/yaml.h>
 #include <QStandardPaths>
 #include <QtCore/QFile>
+#include <QtCore/QEventLoop>
 
 SubscribeManager::SubscribeManager(QWidget *parent) :
     QDialog(parent),
@@ -128,7 +129,7 @@ QVariant ProfileModel::headerData(int section, Qt::Orientation orientation, int 
 void ProfileModel::addSubscribe(QString name, QString url, int index) {
     int row = index<0?profiles.size():index;
     beginInsertRows(QModelIndex(), row,row);
-    profiles.append(QPair(name, url));
+    profiles.append(QPair<QString, QString>(name, url));
     endInsertRows();
 }
 
@@ -179,7 +180,7 @@ void UpdateThread::run() {
         connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
         loop.exec(QEventLoop::ExcludeUserInputEvents);
         if(reply->error()){
-            errorList.append(QPair(url, reply->errorString()));
+            errorList.append(QPair<QString, QString>(url, reply->errorString()));
         } else{
             ClashConfig::loadProfileFromString(reply->readAll(), proxy, proxy_group, rules);
         }

@@ -8,9 +8,8 @@
 #include <QElapsedTimer>
 
 SystemTray::SystemTray(){
-#ifndef DEBUG
-    clash.start();
-#endif
+
+
     setIcon(QIcon(":/icon/clash.png"));
     menu = new QMenu();
     initMenu();
@@ -29,13 +28,19 @@ SystemTray::SystemTray(){
         while(t.elapsed()<1000){
             QCoreApplication::processEvents(); // Handle event when in loop
         }
+        Clash::load();
         w.reload();
     });
+
+
     subscribe = new SubscribeManager();
     connect(subscribe, &SubscribeManager::updateFinish, this, [this](int suc, int err){
         this->showMessage(tr("Update Finished"), tr("%1 succeed, %2 failed").arg(suc).arg(err));
         clash.restart();
     });
+#ifndef DEBUG
+    clash.start();
+#endif
 }
 
 void SystemTray::onTrayClicked(QSystemTrayIcon::ActivationReason reason) {
@@ -103,5 +108,8 @@ void SystemTray::copyCommand() {
 }
 
 SystemTray::~SystemTray() {
+    clash.stop();
     delete subscribe;
 }
+
+

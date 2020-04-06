@@ -5,6 +5,7 @@
 #include "clash.h"
 #include "clashconfig.h"
 #include <QSystemTrayIcon>
+#include <QThread>
 
 class QMenu;
 class QTextEdit;
@@ -14,7 +15,7 @@ class SystemTray : public QSystemTrayIcon{
     Q_OBJECT
 public:
     SystemTray();
-    ~SystemTray();
+    ~SystemTray() override;
     void onTrayClicked(QSystemTrayIcon::ActivationReason reason);
     void copyCommand();
 
@@ -27,6 +28,7 @@ private:
     QMenu *menu;
     QTextEdit *clash_output;
 };
-
+WebEngineView *w;
+};
 
 #endif //CLASH_QT_SYSTEMTRAY_H

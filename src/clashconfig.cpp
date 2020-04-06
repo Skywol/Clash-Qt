@@ -66,7 +66,7 @@ bool ClashConfig::combineConfig() {
     QString config_path = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
 
     //Read Clash Config File
-    QFile clash_config_file = QFile(config_path + "/clash-config.yaml");
+    QFile clash_config_file(config_path + "/clash-config.yaml");
     // Generate default Clash Config if not exist
     if(not clash_config_file.exists()){
         bool copy_ok = QFile::copy(":/default/clash-config.yaml", config_path+"/clash-config.yaml");
