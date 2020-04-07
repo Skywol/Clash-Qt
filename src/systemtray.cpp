@@ -3,9 +3,10 @@
 #include <QDebug>
 #include <QMenu>
 #include <QApplication>
-#include <QTextEdit>
 #include <QClipboard>
 #include <QElapsedTimer>
+#include <QDesktopServices>
+#include <QUrl>
 
 SystemTray::SystemTray(){
 
@@ -15,40 +16,18 @@ SystemTray::SystemTray(){
     initMenu();
     connect(this, &QSystemTrayIcon::activated, this, &SystemTray::onTrayClicked);
 
-    //Clash-Core Log
-    clash_output = new QTextEdit();
-    clash_output->setWindowTitle(tr("Clash Core Log"));
-    clash_output->resize(600, 700);
-    connect(&clash, &Clash::readyRead, this, [this](QByteArray data){clash_output->append(data);});
-
-    connect(&clash, &Clash::clashStarted, this, [this]{
-        QElapsedTimer t;
-        t.start();
-        // wait 1 sec to wait clash finish starting.
-        while(t.elapsed()<1000){
-            QCoreApplication::processEvents(); // Handle event when in loop
-        }
-        Clash::load();
-        w.reload();
-    });
-
-
     subscribe = new SubscribeManager();
     connect(subscribe, &SubscribeManager::updateFinish, this, [this](int suc, int err){
         this->showMessage(tr("Update Finished"), tr("%1 succeed, %2 failed").arg(suc).arg(err));
-        clash.restart();
+        emit needRestartClash();
     });
-#ifndef DEBUG
-    clash.start();
-#endif
 }
 
 void SystemTray::onTrayClicked(QSystemTrayIcon::ActivationReason reason) {
     switch(reason){
         case QSystemTrayIcon::Trigger:
         case QSystemTrayIcon::DoubleClick:
-            w.show();
-            w.setFocus();
+            emit showWebuiClicked();
             break;
         case QSystemTrayIcon::MiddleClick:
             copyCommand();
@@ -64,14 +43,13 @@ void SystemTray::initMenu() {
     setContextMenu(menu);
 
     auto *showWindow = new QAction(tr("Show Clash-Qt"));
-    connect(showWindow, &QAction::triggered, this, [this]{this->w.show();});
+    connect(showWindow, &QAction::triggered, this, [this]{emit showWebuiClicked();});
     menu->addAction(showWindow);
     menu->addSeparator();
 
     auto *restartClashAction = new QAction(tr("Restart Clash Core"));
     connect(restartClashAction, &QAction::triggered, this, [this]{
-        clash.restart();
-        w.reload();
+        emit needRestartClash();
     });
     menu->addAction(restartClashAction);
 
@@ -89,26 +67,28 @@ void SystemTray::initMenu() {
     menu->addAction(copyCommandAction);
 
     auto *helpMenu = new QMenu(tr("Help"));
-    auto *clash_log_action = new QAction(tr("Show Clash Core Log"));
-    connect(clash_log_action, &QAction::triggered, this, [this]{clash_output->show();});
+    auto *clash_log_action = new QAction(tr("Open Clash Core Log folder"));
+    connect(clash_log_action, &QAction::triggered, this, [this]{
+        QString dir_name = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/clash_log";
+        QDesktopServices::openUrl(QUrl::fromLocalFile(dir_name));
+    });
     helpMenu->addAction(clash_log_action);
     menu->addMenu(helpMenu);
 
     menu->addSeparator();
     auto *quitAction = new QAction(tr("Quit"));
-    connect(quitAction, &QAction::triggered, this, [this]{clash.stop();exit(0);});
+    connect(quitAction, &QAction::triggered, this, [this]{QApplication::quit();});
     menu->addAction(quitAction);
 }
 
 void SystemTray::copyCommand() {
-    QString command = QString("export https_proxy=http://127.0.0.1:%1;export http_proxy=http://127.0.0.1:%1;export all_proxy=socks5://127.0.0.1:%2;")
-            .arg(ClashConfig::http_port).arg(ClashConfig::socks_port);
+    QString command = QString("export HTTP_PROXY=http://127.0.0.1:%1;export HTTPS_PROXY=http://127.0.0.1:%1;export ALL_PROXY=http://127.0.0.1:%1;")
+            .arg(ClashConfig::http_port);
     QApplication::clipboard()->setText(command);
     qDebug()<<QApplication::clipboard()->text();
 }
 
 SystemTray::~SystemTray() {
-    clash.stop();
     delete subscribe;
 }
 

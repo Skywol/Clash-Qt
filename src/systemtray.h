@@ -1,7 +1,6 @@
 #ifndef CLASH_QT_SYSTEMTRAY_H
 #define CLASH_QT_SYSTEMTRAY_H
 
-#include "mainwindow.h"
 #include "clash.h"
 #include "clashconfig.h"
 #include <QSystemTrayIcon>
@@ -13,22 +12,21 @@ class SubscribeManager;
 
 class SystemTray : public QSystemTrayIcon{
     Q_OBJECT
+signals:
+    void showWebuiClicked();
+    void needRestartClash();
 public:
     SystemTray();
     ~SystemTray() override;
     void onTrayClicked(QSystemTrayIcon::ActivationReason reason);
     void copyCommand();
+    void appendClashOutput(QByteArray o);
 
 private:
     inline void initMenu();
 
-    MainWindow w;
     SubscribeManager *subscribe;
-    Clash clash;
     QMenu *menu;
-    QTextEdit *clash_output;
-};
-WebEngineView *w;
 };
 
 #endif //CLASH_QT_SYSTEMTRAY_H

@@ -12,10 +12,11 @@
 #include <QNetworkRequest>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QMessageBox>
 
 Clash::Clash() {
     proc = new QProcess(this);
-
+    pid = 0;
     connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, [this](int exit_code, QProcess::ExitStatus exitStatus){
                 if(exit_code != 0){
@@ -29,12 +30,10 @@ Clash::Clash() {
             <<"-d"
             <<QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
     );
-    proc->setProcessChannelMode(QProcess::MergedChannels);
-
-    connect(proc, &QProcess::readyRead, this, [this]{
-        emit readyRead(proc->readAll());
-    });
-    connect(proc, &QProcess::started, this, [this]{qDebug()<<"proc started"; emit clashStarted();});
+    QString config_path = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    QString date = QDateTime::currentDateTime().toString("[yyyy-MM-dd]");
+    proc->setStandardOutputFile((config_path+"/clash_log/%1-stdout.log").arg(date), QIODevice::Append);
+    proc->setStandardErrorFile((config_path+"/clash_log/%1-stderr.log").arg(date), QIODevice::Append);
 }
 
 void Clash::start() {
@@ -54,30 +53,38 @@ void Clash::start() {
         ClashConfig::genreateCountryDB();
     }
     if(proc != nullptr){
-        proc->start();
+        proc->startDetached(&pid);
+        if(pid == 0){
+            QMessageBox::warning(nullptr,
+                    tr("Start Clash Failed"),
+                    tr("Start Clash failed, please check whether clash is exist.")
+                    );
+            exit(-1);
+        }
+        qDebug()<<"Start clash-core with pid:  "<<pid;
+        emit clashStarted();
     }
 }
 
 void Clash::restart() {
-    ClashConfig::combineConfig();
-    if(proc != nullptr){
-        if(proc->state() != QProcess::NotRunning ){
-            proc->terminate();
-            proc->waitForFinished(1000);
-        }
-        proc->start();
+    if(pid != 0) {
+        stop();
     }
+    start();
 }
 
 void Clash::stop() {
     save();
-    proc->terminate();
+    QProcess::startDetached("kill", QStringList()<<QString::number(pid));
+    pid = 0;
 }
 
 void Clash::save() {
-    if(proc->state() == QProcess::NotRunning)
+    if(pid == 0){
+        qDebug()<<"Clash-core is not running";
         return;
-    qDebug()<<"Save Status";
+    }
+    qDebug()<<"Save Clash Status";
     QNetworkAccessManager manager;
     QNetworkRequest req(QUrl("http://127.0.0.1:9090/proxies"));
     auto re = manager.get(req);
@@ -112,7 +119,7 @@ void Clash::save() {
 }
 
 void Clash::load() {
-    qDebug()<<"Load Status";
+    qDebug()<<"Load Clash Status";
     QNetworkAccessManager manager;
     QString config_path = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     YAML::Node proxies = YAML::LoadFile(QString(config_path + "/status.yaml").toStdString());

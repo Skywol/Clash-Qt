@@ -20,6 +20,7 @@ public:
     void restart();
 private:
     QProcess *proc;
+    qint64 pid;
 };
 
 
