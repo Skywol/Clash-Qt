@@ -14,6 +14,7 @@ int ClashConfig::http_port = 7890;
 int ClashConfig::socks_port = 7891;
 
 void ClashConfig::loadProfileFromFile(const QString& filename, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules){
+    qDebug()<<"Load Profile: "<<filename;
     if(!QFile::exists(filename)){
         return;
     }
@@ -40,6 +41,7 @@ void ClashConfig::loadProfileFromFile(const QString& filename, YAML::Node &proxy
 }
 
 void ClashConfig::loadProfileFromString(const QString& data, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules){
+    if(data.isEmpty()){return;}
     try {
         YAML::Node node = YAML::Load(data.toStdString());
         YAML::Node proxyList = node["Proxy"];

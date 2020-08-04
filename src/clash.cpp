@@ -59,6 +59,10 @@ void Clash::start() {
                     tr("Start Clash Failed"),
                     tr("Start Clash failed, please check whether clash is exist.")
                     );
+            qDebug()<<"Stderr:";
+            qDebug()<<proc->readAllStandardError();
+            qDebug()<<"Stdout:";
+            qDebug()<<proc->readAllStandardOutput();
             exit(-1);
         }
         qDebug()<<"Start clash-core with pid:  "<<pid;
@@ -122,6 +126,10 @@ void Clash::load() {
     qDebug()<<"Load Clash Status";
     QNetworkAccessManager manager;
     QString config_path = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    if(! QFile::exists(config_path + "/status.yaml")) {
+        qDebug()<<"No Saved Status";
+        return;
+    }
     YAML::Node proxies = YAML::LoadFile(QString(config_path + "/status.yaml").toStdString());
     for(auto const &proxy:proxies){
         QString name = QString::fromStdString(proxy["name"].as<std::string>());
