@@ -182,7 +182,8 @@ void UpdateThread::run() {
         if(reply->error()){
             errorList.append(QPair<QString, QString>(url, reply->errorString()));
         } else{
-            ClashConfig::loadProfileFromString(reply->readAll(), proxy, proxy_group, rules);
+            QByteArray data = reply->readAll();
+            ClashConfig::loadProfileFromString(QString::fromUtf8(data), proxy, proxy_group, rules);
         }
         reply->deleteLater();
     }
@@ -190,12 +191,14 @@ void UpdateThread::run() {
     subscribeFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
     QTextStream out(&subscribeFile);
     YAML::Node node;
-    node["Proxy"]=proxy;
-    node["Proxy Group"]=proxy_group;
-    node["Rule"] = rules;
+    node["proxies"]=proxy;
+    node["proxy-groups"]=proxy_group;
+    node["rules"] = rules;
     YAML::Emitter emitter;
     emitter<<node;
     out<<QString(emitter.c_str());
+    out.flush();
+    subscribeFile.close();
     emit updateFinished(urls.size()-errorList.size(), errorList.size());
 }
 

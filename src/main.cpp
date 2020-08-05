@@ -21,6 +21,9 @@ int main(int argc, char *argv[]) {
     if(not QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).exists()){
         QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));
     }
+    if(! QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/clash_log").exists()){
+        QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/clash_log");
+    }
 
     ClashConfig::combineConfig();
     Clash clash;

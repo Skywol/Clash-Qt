@@ -20,16 +20,16 @@ void ClashConfig::loadProfileFromFile(const QString& filename, YAML::Node &proxy
     }
     try {
         YAML::Node node = YAML::LoadFile(filename.toStdString());
-        YAML::Node proxyList = node["Proxy"];
+        YAML::Node proxyList = node["proxies"];
         for (const auto& profile:proxyList) {
             proxy.push_back(profile);
         }
 
-        YAML::Node groupList = node["Proxy Group"];
+        YAML::Node groupList = node["proxy-groups"];
         for (const auto& group: groupList) {
             proxy_group.push_back(group);
         }
-        YAML::Node rule_list = node["Rule"];
+        YAML::Node rule_list = node["rules"];
         for (const auto& rule:rule_list){
             rules.push_back(rule);
         }
@@ -41,19 +41,20 @@ void ClashConfig::loadProfileFromFile(const QString& filename, YAML::Node &proxy
 }
 
 void ClashConfig::loadProfileFromString(const QString& data, YAML::Node &proxy, YAML::Node &proxy_group, YAML::Node &rules){
-    if(data.isEmpty()){return;}
     try {
         YAML::Node node = YAML::Load(data.toStdString());
-        YAML::Node proxyList = node["Proxy"];
+        YAML::Node proxyList = node["proxies"];
+        int i=0;
         for (const auto& profile:proxyList) {
             proxy.push_back(profile);
+            qDebug()<<i++<<" "<<profile["name"];
         }
 
-        YAML::Node groupList = node["Proxy Group"];
+        YAML::Node groupList = node["proxy-groups"];
         for (const auto& group: groupList) {
             proxy_group.push_back(group);
         }
-        YAML::Node rule_list = node["Rule"];
+        YAML::Node rule_list = node["rules"];
         for (const auto& rule:rule_list){
             rules.push_back(rule);
         }
@@ -86,9 +87,9 @@ bool ClashConfig::combineConfig() {
     loadProfileFromFile(config_path + "/custom.yaml", proxy, proxy_group, rules);
     YAML::Emitter emitter;
     YAML::Node node;
-    node["Proxy"]=proxy;
-    node["Proxy Group"]=proxy_group;
-    node["Rule"] = rules;
+    node["proxies"]=proxy;
+    node["proxy-groups"]=proxy_group;
+    node["rules"] = rules;
     emitter<<node;
 
     //Write to clash config file
