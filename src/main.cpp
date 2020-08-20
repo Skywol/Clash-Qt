@@ -1,11 +1,11 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "readability-static-accessed-through-instance"
+
 #include <QApplication>
 #include <QDir>
 #include <QStandardPaths>
-#include <QtCore/QElapsedTimer>
 
-#include "clashconfig.h"
-#include "systemtray.h"
-#include "webui.h"
+#include "ui/window/mainwindow.h"
 
 int main(int argc, char *argv[]) {
 
@@ -25,5 +25,10 @@ int main(int argc, char *argv[]) {
         QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/clash_log");
     }
 
+    MainWindow w;
+    w.show();
+
     return a.exec();
 }
+
+#pragma clang diagnostic pop

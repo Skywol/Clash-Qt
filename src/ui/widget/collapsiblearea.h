@@ -1,0 +1,10 @@
+#ifndef CLASH_QT_COLLAPSIBLEAREA_H
+#define CLASH_QT_COLLAPSIBLEAREA_H
+
+
+class CollapsibleArea {
+
+};
+
+
+#endif //CLASH_QT_COLLAPSIBLEAREA_H
