@@ -5,9 +5,11 @@
 #include <QButtonGroup>
 #include "ui_mainwindow.h"
 
+#include "clash/restfulapi.h"
+
 class MainWindow : public QMainWindow
         , Ui::MainWindow
-        {
+{
 public:
     explicit MainWindow(QWidget *parent = nullptr);
 
@@ -17,6 +19,8 @@ private:
     Ui::MainWindow *ui;
     QButtonGroup *group;
     QAbstractButton *currentButton;
+
+    Clash::RestfulApi &restfulApi;
 };
 
 

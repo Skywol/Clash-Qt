@@ -16,7 +16,16 @@ int main(int argc, char *argv[]) {
     a.setApplicationName("Clash-Qt");
 #endif
     a.setWindowIcon(QIcon(":/icon/clash.png"));
-    a.setQuitOnLastWindowClosed(false);
+    //a.setQuitOnLastWindowClosed(false);
+
+#ifdef _WIN32
+    a.setFont(QFont("Microsoft YaHei", 9));
+#endif
+
+    QFile styleFile(":/style.qss");
+    styleFile.open(QIODevice::ReadOnly);
+    QString style = styleFile.readAll();
+    a.setStyleSheet(style);
 
     if(not QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).exists()){
         QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));

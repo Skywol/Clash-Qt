@@ -23,7 +23,12 @@ include_directories(src)
 
 set(src_files
         src/main.cpp
-        src/ui/widget/collapsiblearea.cpp src/ui/widget/collapsiblearea.h src/ui/window/mainwindow.cpp src/ui/window/mainwindow.h src/clash/clash.cpp src/clash/clash.h src/clash/restfulapi.cpp src/clash/restfulapi.h)
+        src/ui/window/mainwindow.cpp src/ui/window/mainwindow.h
+        src/clash/clash.cpp src/clash/clash.h src/clash/restfulapi.cpp src/clash/restfulapi.h
+        src/ui/widget/proxywidget.h src/ui/widget/proxywidget.cpp
+        src/ui/widget/proxygroupwidget.h src/ui/widget/proxygroupwidget.cpp
+        src/ui/window/proxypage.h src/ui/window/proxypage.cpp
+        src/ui/util/flowlayout.cpp src/ui/util/flowlayout.h)
 
 set(res_files res/res.qrc)
 add_executable(clash-qt ${src_files} ${res_files})

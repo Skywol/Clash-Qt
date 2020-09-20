@@ -1,1 +1,0 @@
-#include "collapsiblearea.h"
