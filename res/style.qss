@@ -3,11 +3,11 @@ QWidget#menuTab > QPushButton{
     padding:10px;
     border-radius:8px;
     color:#FFFFFF;
-    background:#34495E;
+    background:#8c9eff;
 }
-QWidget#menuTab > QPushButton:hover{color:#F0F0F0;background:#4E6D8C;}
-QWidget#menuTab > QPushButton:pressed{color:#B8C6D1;background:#2D3E50;}
-QWidget#menuTab > QPushButton:checked{color:#FFFFFF;background:rgb(70, 101, 152);}
+QWidget#menuTab > QPushButton:hover{color:#F0F0F0;background:#c0cfff;}
+QWidget#menuTab > QPushButton:pressed{color:#B8C6D1;background:#5870cb;}
+QWidget#menuTab > QPushButton:checked{color:#FFFFFF;background:#5870cb;}
 
 ProxyWidget {
     border-style:none;
@@ -23,10 +23,12 @@ ProxyWidget:checked{color:#FFFFFF;background:rgb(70, 101, 152);}
 ProxyWidget QLabel{
     color:#FFFFFF;
 }
-
+ProxyGroupWidget {
+    padding:0px;
+}
 ProxyGroupWidget QWidget#groupHeader{
     border-radius:8px;
-    background:#9d9d9d;
+    background:#fea9ef;
 }
 
 QPushButton#groupButton:checked{

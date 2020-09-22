@@ -1,17 +1,20 @@
 #include "proxywidget.h"
 #include "ui_proxywidget.h"
+#include "clash/restfulapi.h"
 #include <QStyleOption>
 #include <QPainter>
 #include <QMouseEvent>
 #include <QDebug>
+#include <utility>
 
-ProxyWidget::ProxyWidget(QString name, QWidget *parent) :
+ProxyWidget::ProxyWidget(const QString &groupName, const QString &name, QWidget *parent) :
     QWidget(parent), checked(false),
     ui(new Ui::ProxyWidget)
 {
     setObjectName("ProxyWidget");
     ui->setupUi(this);
-    ui->name->setText("Test Proxy");
+    setName(name);
+    setGroup(groupName);
     ui->lag->setText("···");
 }
 
@@ -32,12 +35,9 @@ QString ProxyWidget::getName() {
     return ui->name->text();
 }
 
-void ProxyWidget::setName(QString name) {
+void ProxyWidget::setName(const QString &name) {
     ui->name->setText(name);
-}
-
-void ProxyWidget::set(int lag_ms) {
-
+    setProperty("name",name);
 }
 
 void ProxyWidget::setChecked(bool checked) {
@@ -46,8 +46,17 @@ void ProxyWidget::setChecked(bool checked) {
 }
 
 void ProxyWidget::mouseReleaseEvent(QMouseEvent *event) {
-    if(!this->geometry().contains(event->pos())) return;
-    setChecked(!checked);
+    if(event->pos().x()<geometry().width() && event->pos().y() < geometry().height()){
+        Clash::RestfulApi::getInstance().updateProxySelector(
+                property("group").toString(),
+                property("name").toString()
+                );
+    }
+
+}
+
+void ProxyWidget::setGroup(const QString &group) {
+    setProperty("group", group);
 }
 
 

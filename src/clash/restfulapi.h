@@ -16,9 +16,12 @@ namespace Clash{
 
         void start();
         void stop();
+        void updateProxy();
+        void updateProxySelector(QString group, QString name);
     signals:
         void trafficUpdate(int up, int down);
         void logReceived(QString type, QString payload);
+        void proxyDataReceived(QByteArray rawJson);
     private:
         RestfulApi();
         QString url;

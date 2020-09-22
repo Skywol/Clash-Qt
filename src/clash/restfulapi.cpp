@@ -7,6 +7,7 @@
 
 #define TRAFFIC_URL url + "traffic"
 #define LOG_URL url + "logs"
+#define PROXY_URL url + "proxies"
 
 Clash::RestfulApi::RestfulApi() :manager(this), log(nullptr),traffic(nullptr){
     url = "http://127.0.0.1:9090/";
@@ -73,4 +74,30 @@ void Clash::RestfulApi::start() {
 
 void Clash::RestfulApi::stop() {
     checkReply({log, traffic});
+}
+
+void Clash::RestfulApi::updateProxySelector(QString group, QString name) {
+    QNetworkRequest request;
+    request.setRawHeader("Content-Type","application/json");
+    request.setUrl(QUrl(PROXY_URL +"/" + group.toUtf8()));
+    QJsonObject data;
+    data["name"]=name;
+    qDebug()<<request.url()<<QJsonDocument(data).toJson();
+    auto reply = manager.put(request, QJsonDocument(data).toJson(QJsonDocument::JsonFormat::Compact));
+    connect(reply, &QNetworkReply::finished, this, [this, reply]{
+        qDebug()<<reply->readAll();
+        updateProxy();
+        reply->deleteLater();
+    });
+}
+
+void Clash::RestfulApi::updateProxy() {
+    QNetworkRequest request;
+    request.setRawHeader("Content-Type","application/json");
+    request.setUrl(QUrl(PROXY_URL));
+    auto reply = manager.get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]{
+        emit proxyDataReceived(reply->readAll());
+        reply->deleteLater();
+    });
 }

@@ -49,6 +49,9 @@ public:
     QSize sizeHint() const override;
     QLayoutItem *takeAt(int index) override;
 
+    void insertWidget(int index, QWidget *widget);
+    void removeWidgets(int start, int end = -1);
+
 private:
     int doLayout(const QRect &rect, bool testOnly) const;
     int smartSpacing(QStyle::PixelMetric pm) const;

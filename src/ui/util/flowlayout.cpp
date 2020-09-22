@@ -24,6 +24,7 @@
 ****************************************************************************/
 #include "flowlayout.h"
 #include <QWidget>
+#include <QLayoutItem>
 
 FlowLayout::FlowLayout(QWidget *parent, int margin, int hSpacing, int vSpacing)
         : QLayout(parent), m_hSpace(hSpacing), m_vSpace(vSpacing)
@@ -167,5 +168,21 @@ int FlowLayout::smartSpacing(QStyle::PixelMetric pm) const
         return pw->style()->pixelMetric(pm, nullptr, pw);
     } else {
         return static_cast<QLayout *>(parent)->spacing();
+    }
+}
+
+void FlowLayout::insertWidget(int index, QWidget *widget) {
+    addWidget(widget);
+    if(index >=0 && index < itemList.count()){
+        itemList.move(count()-1, index);
+    }
+    update();
+}
+
+void FlowLayout::removeWidgets(int start, int end) {
+    for(int i=start;i<end;i++){
+        auto item = takeAt(i);
+        delete item->widget();
+        delete item;
     }
 }

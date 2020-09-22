@@ -12,11 +12,11 @@ class ProxyWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ProxyWidget(QString name = "",QWidget *parent = nullptr);
+    explicit ProxyWidget(const QString &groupName = "", const QString &name = "",QWidget *parent = nullptr);
     ~ProxyWidget();
     QString getName();
-    void setName(QString name);
-    void set(int lag_ms);
+    void setName(const QString &name);
+    void setGroup(const QString &group);
     void setChecked(bool checked);
 
 protected:

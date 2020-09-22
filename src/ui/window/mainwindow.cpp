@@ -6,6 +6,8 @@
 #include "mainwindow.h"
 #include "proxypage.h"
 
+#include <QTimer>
+
 constexpr int genralBtnId = 1;
 constexpr int proxyBtnId = 2;
 constexpr int logBtnId = 3;
@@ -47,6 +49,11 @@ QMainWindow(parent), restfulApi(Clash::RestfulApi::getInstance()){
     });
 
     ui->conetentArea->addWidget(new ProxyPage);
+    restfulApi.updateProxy();
+
+    QTimer *timer = new QTimer;
+    connect(timer, &QTimer::timeout, this, [this]{restfulApi.updateProxy();});
+    timer->start(1000);
 }
 
 void MainWindow::onButtonToggled(QAbstractButton *button, bool checked) {
