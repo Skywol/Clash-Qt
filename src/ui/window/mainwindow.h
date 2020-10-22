@@ -2,25 +2,30 @@
 #define CLASH_QT_MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QButtonGroup>
-#include "ui_mainwindow.h"
+#include <QTabWidget>
 
 #include "clash/restfulapi.h"
 
+class NetSpeedLabel;
+
 class MainWindow : public QMainWindow
-        , Ui::MainWindow
 {
 public:
     explicit MainWindow(QWidget *parent = nullptr);
 
-public slots:
-    void onButtonToggled(QAbstractButton *button, bool checked);
-private:
-    Ui::MainWindow *ui;
-    QButtonGroup *group;
-    QAbstractButton *currentButton;
+    static MainWindow& getInstance(){
+        static MainWindow instance;
+        return instance;
+    }
 
+public slots:
+    void onTabChange(int index);
+private:
+    QTabWidget *tabWidget;
     Clash::RestfulApi &restfulApi;
+
+    int proxyTab;
+    NetSpeedLabel *netSpeedLabel;
 };
 
 

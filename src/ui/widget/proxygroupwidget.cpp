@@ -1,39 +1,26 @@
 #include "proxygroupwidget.h"
-#include "ui_proxygroupwidget.h"
 #include "proxywidget.h"
 #include "ui/util/flowlayout.h"
 
 #include <QJsonArray>
+#include <QSizePolicy>
+#include <QDebug>
 
 ProxyGroupWidget::ProxyGroupWidget(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::ProxyGroupWidget), selected(nullptr)
+    KCollapsibleGroupBox(parent)
 {
-    ui->setupUi(this);
-    connect(ui->groupButton, &QPushButton::clicked, this, &ProxyGroupWidget::setExpanded);
-    setExpanded(true);
-
-    flowLayout = new FlowLayout(ui->content);
-}
-
-ProxyGroupWidget::~ProxyGroupWidget()
-{
-    delete ui;
-}
-
-void ProxyGroupWidget::setExpanded(bool expended) {
-    ui->groupButton->setIcon(QIcon(expended?":/icon/arrow-down.svg":":/icon/arrow-up.svg"));
-    ui->groupButton->setChecked(expended);
-    ui->content->setMaximumHeight(expended?INT16_MAX:0);
-    update();
+    flowLayout = new FlowLayout;
+    setLayout(flowLayout);
 }
 
 void ProxyGroupWidget::updateData(const QJsonObject &group) {
     int total= flowLayout->count();
     QString groupName = group["name"].toString();
-    bool groupChanged = ui->groupName->text() != groupName;
+    bool groupChanged = title() != groupName;
     if(groupChanged){
-        ui->groupName->setText(groupName);
+        setTitle(groupName);
+        flowLayout->removeAllFrom(0);
+        total = 0;
     }
     int index = 0;
     QString now = group["now"].toString();
@@ -55,8 +42,11 @@ void ProxyGroupWidget::updateData(const QJsonObject &group) {
         widget->setChecked(widget->property("name") == now);
         index++;
     }
-    if(index < total){
-        flowLayout->removeWidgets(index++);
-    }
+    flowLayout->removeAllFrom(index);
     update();
+}
+
+void ProxyGroupWidget::resizeEvent(QResizeEvent *event) {
+    KCollapsibleGroupBox::resizeEvent(event);
+    this->flowLayout->update();
 }

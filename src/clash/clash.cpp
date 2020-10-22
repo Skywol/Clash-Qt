@@ -4,6 +4,15 @@
 
 #include "clash.h"
 
-Clash::Process::Process(QObject *parent) : QObject(parent){
-    process.setParent(this);
+Clash::Clash::Clash(QObject *parent){
+    process = new QProcess(this);
+    process->setProgram("./clash");
+}
+
+void Clash::Clash::start() {
+    process->start();
+}
+
+void Clash::Clash::stop() {
+    process->kill();
 }

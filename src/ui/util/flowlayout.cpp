@@ -120,6 +120,8 @@ QSize FlowLayout::minimumSize() const
     int left, top, right, bottom;
     getContentsMargins(&left, &top, &right, &bottom);
     size += QSize(left + right, top + bottom);
+    auto layoutSize = this->contentsRect();
+    size.setHeight(heightForWidth(layoutSize.width()));
     return size;
 }
 
@@ -179,9 +181,16 @@ void FlowLayout::insertWidget(int index, QWidget *widget) {
     update();
 }
 
-void FlowLayout::removeWidgets(int start, int end) {
-    for(int i=start;i<end;i++){
-        auto item = takeAt(i);
+void FlowLayout::removeWidgets(int index) {
+    auto item = takeAt(index);
+    if(item){
+        delete item->widget();
+        delete item;
+    }
+}
+
+void FlowLayout::removeAllFrom(int index) {
+    while (auto item = takeAt(index)){
         delete item->widget();
         delete item;
     }

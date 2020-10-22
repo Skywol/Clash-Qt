@@ -1,27 +1,40 @@
 #include "proxypage.h"
-#include "ui_proxypage.h"
 #include "clash/restfulapi.h"
+#include "util/instance.h"
 #include <ui/widget/proxygroupwidget.h>
+
 #include <QJsonDocument>
 #include <QJsonObject>
-
+#include <QTimer>
 ProxyPage::ProxyPage(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::ProxyPage)
+    QWidget(parent)
 {
-    ui->setupUi(this);
-    ui->content->layout()->setAlignment(Qt::AlignmentFlag::AlignTop);
+    auto layout = new QVBoxLayout;
+    setLayout(layout);
 
-    connect(&Clash::RestfulApi::getInstance(), &Clash::RestfulApi::proxyDataReceived, this, &ProxyPage::updateData);
+    headerArea = new QHBoxLayout;
+    layout->addLayout(headerArea);
+    headerArea->setAlignment(Qt::AlignmentFlag::AlignCenter);
+
+
+    groupArea = new QScrollArea;
+    groupLayout = new QVBoxLayout;
+    QWidget *inner = new QWidget;
+    QVBoxLayout *innerLayout = new QVBoxLayout;
+    inner->setLayout(innerLayout);
+    innerLayout->addLayout(groupLayout);
+    innerLayout->addStretch();
+    groupArea->setWidgetResizable(true);
+    groupArea->setWidget(inner);
+    layout->addWidget(groupArea);
+    groupArea->setAlignment(Qt::AlignmentFlag::AlignTop);
+    setMode(Clash::RULE);
+    connect(&getInstance<Clash::RestfulApi>(), &Clash::RestfulApi::proxyDataReceived, this, &ProxyPage::updateData);
 }
 
-ProxyPage::~ProxyPage()
-{
-    delete ui;
-}
 
 void ProxyPage::updateData(QByteArray rawJson) {
-    QJsonParseError error;
+    QJsonParseError error{};
     QJsonDocument document = QJsonDocument::fromJson(rawJson, &error);
     if(error.error == QJsonParseError::NoError){
         QJsonObject obj = document.object()["proxies"].toObject();
@@ -29,34 +42,78 @@ void ProxyPage::updateData(QByteArray rawJson) {
             qDebug()<<"Can not parse data (empty): " << rawJson<<"Reason: ";
             return;
         }
-        auto groupList = obj.keys();
-        int proxy_index = groupList.indexOf("Proxy");
-        auto layout = ui->content->layout();
-        for(int i=0; i<groupList.size();i++){
-            int target = 0;
-            if(i > proxy_index){
-                target = i;
-            } else if (i < proxy_index){
-                target = i+1;
+        int current_item_number = groupLayout->count();
+        if(mode == Clash::RULE){ // Do not display GLOBAL, DIRECT
+            QList<QString> groupList;
+            static QSet<QString> hiddenList = {"DIRECT", "GLOBAL"};
+            for(auto name:obj.keys()){
+                if(!hiddenList.contains(name)){
+                    groupList.append(name);
+                }
             }
-            if(target >= layout->count()){
+            int proxy_index = groupList.indexOf("Proxy"); // record Group Proxy index to display it first;
+
+            // Deal Proxy First
+            if(proxy_index >= 0){
+                if(current_item_number == 0){
+                    auto widget = new ProxyGroupWidget(this);
+                    widget->updateData(obj["Proxy"].toObject());
+                    groupLayout->addWidget(widget);
+                } else {
+                    auto widget = dynamic_cast<ProxyGroupWidget*>(groupLayout->itemAt(0)->widget());
+                    widget->updateData(obj["Proxy"].toObject());
+                }
+            }
+
+            for(int i = 0; i < groupList.count(); i++){
+                if(i == proxy_index){continue;}
+                int index = (i < proxy_index) ? i + 1 : i;
+
+                if (index >= current_item_number){
+                    auto widget = new ProxyGroupWidget(this);
+                    widget->updateData(obj[groupList.at(i)].toObject());
+                    groupLayout->addWidget(widget);
+                } else{
+                    auto widget = dynamic_cast<ProxyGroupWidget*>(groupLayout->itemAt(index)->widget());
+                    widget->updateData(obj[groupList.at(i)].toObject());
+                }
+            }
+
+            // Delete extra item
+            for(int i = groupList.size(); i < groupLayout->count(); i++){
+                auto item = groupLayout->takeAt(i);
+                if(item != nullptr){
+                    delete item->widget();
+                    delete item;
+                }
+            }
+        } else if(mode == Clash::GLOBAL){ // Display Global group only
+            if(groupLayout->count() == 0){
                 ProxyGroupWidget *widget = new ProxyGroupWidget(this);
-                widget->updateData(obj[groupList.at(i)].toObject());
-                layout->addWidget(widget);
+                widget->updateData(obj["GLOBAL"].toObject());
+                groupLayout->addWidget(widget);
             } else{
-                ((ProxyGroupWidget*)layout->itemAt(target)->widget())
-                    ->updateData(obj[groupList.at(i)].toObject());
+                auto widget = dynamic_cast<ProxyGroupWidget*>(groupLayout->itemAt(0)->widget());
+                widget->updateData(obj["GLOBAL"].toObject());
+                //widget->expand();
+                while (auto item = groupLayout->takeAt(1)){
+                    delete item->widget();
+                    delete item;
+                }
             }
-        }
-        for(int i = groupList.size(); i < layout->count(); i++){
-            auto item = layout->takeAt(i);
-            if(item != nullptr){
+        } else{ // Do not display in other mode
+            while (auto item = groupLayout->takeAt(0)){
                 delete item->widget();
                 delete item;
             }
         }
+
     } else{
         qDebug()<<"Can not parse data: " << rawJson<<"Reason: "<< error.errorString();
     }
-    update();
 }
+
+void ProxyPage::setMode(Clash::Mode mode) {
+    this->mode = mode;
+}
+

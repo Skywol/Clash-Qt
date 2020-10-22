@@ -6,7 +6,7 @@
 #include <QStandardPaths>
 
 #include "ui/window/mainwindow.h"
-
+#include "util/instance.h"
 int main(int argc, char *argv[]) {
 
     QApplication a(argc, argv);
@@ -17,10 +17,6 @@ int main(int argc, char *argv[]) {
 #endif
     a.setWindowIcon(QIcon(":/icon/clash.png"));
     //a.setQuitOnLastWindowClosed(false);
-
-#ifdef _WIN32
-    a.setFont(QFont("Microsoft YaHei", 9));
-#endif
 
     QFile styleFile(":/style.qss");
     styleFile.open(QIODevice::ReadOnly);
@@ -34,8 +30,7 @@ int main(int argc, char *argv[]) {
         QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/clash_log");
     }
 
-    MainWindow w;
-    w.show();
+    getInstance<MainWindow>().show();
 
     return a.exec();
 }

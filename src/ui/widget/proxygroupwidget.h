@@ -3,27 +3,23 @@
 
 #include "ui/util/flowlayout.h"
 #include "proxywidget.h"
-#include <QWidget>
+#include <KCollapsibleGroupBox>
 #include <QJsonObject>
 
-namespace Ui {
-class ProxyGroupWidget;
-}
 
-class ProxyGroupWidget : public QWidget
+class ProxyGroupWidget : public KCollapsibleGroupBox
 {
     Q_OBJECT
 
 public:
     explicit ProxyGroupWidget(QWidget *parent = nullptr);
-    ~ProxyGroupWidget();
-    void setExpanded(bool expended);
     void updateData(const QJsonObject &group);
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
-    Ui::ProxyGroupWidget *ui;
     FlowLayout *flowLayout;
-    ProxyWidget *selected;
 };
 
 #endif // PROXYGROUPWIDGET_H

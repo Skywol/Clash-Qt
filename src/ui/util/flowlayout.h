@@ -50,7 +50,8 @@ public:
     QLayoutItem *takeAt(int index) override;
 
     void insertWidget(int index, QWidget *widget);
-    void removeWidgets(int start, int end = -1);
+    void removeWidgets(int index);
+    void removeAllFrom(int index);
 
 private:
     int doLayout(const QRect &rect, bool testOnly) const;

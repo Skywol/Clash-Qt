@@ -5,18 +5,23 @@
 #include <QProcess>
 
 namespace Clash{
-    class Process : public QObject{
+    enum Mode{
+        RULE, GLOBAL, DIRECT
+    };
+
+    class Clash : public QProcess{
     Q_OBJECT
     public:
-        explicit Process(QObject *parent = nullptr);
+        explicit Clash(QObject *parent = nullptr);
 
         void start();
         void stop();
-        void restart();
-
+    signals:
+        void started();
+        void stoped();
     private:
         QString program;
-        QProcess process;
+        QProcess *process;
     };
 }
 

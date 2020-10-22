@@ -1,10 +1,11 @@
 #ifndef PROXYPAGE_H
 #define PROXYPAGE_H
 
+#include "clash/clash.h"
 #include <QWidget>
-namespace Ui {
-class ProxyPage;
-}
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QScrollArea>
 
 class ProxyPage : public QWidget
 {
@@ -12,12 +13,15 @@ class ProxyPage : public QWidget
 
 public:
     explicit ProxyPage(QWidget *parent = nullptr);
-    ~ProxyPage();
 
     void updateData(QByteArray rawJson);
-
+    void setMode(Clash::Mode mode);
 private:
-    Ui::ProxyPage *ui;
+
+    Clash::Mode mode;
+    QHBoxLayout *headerArea;
+    QVBoxLayout *groupLayout;
+    QScrollArea *groupArea;
 };
 
 #endif // PROXYPAGE_H

@@ -2,10 +2,8 @@
 #define PROXYWIDGET_H
 
 #include <QWidget>
-
-namespace Ui {
-class ProxyWidget;
-}
+#include <QLabel>
+#include <QHBoxLayout>
 
 class ProxyWidget : public QWidget
 {
@@ -13,7 +11,6 @@ class ProxyWidget : public QWidget
 
 public:
     explicit ProxyWidget(const QString &groupName = "", const QString &name = "",QWidget *parent = nullptr);
-    ~ProxyWidget();
     QString getName();
     void setName(const QString &name);
     void setGroup(const QString &group);
@@ -25,8 +22,9 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
 
 private:
-    Ui::ProxyWidget *ui;
     bool checked;
+    QHBoxLayout *layout;
+    QLabel *proxy, *lag;
 };
 
 #endif // PROXYWIDGET_H
