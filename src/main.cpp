@@ -1,6 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "readability-static-accessed-through-instance"
-
 #include <QApplication>
 #include <QDir>
 #include <QStandardPaths>
@@ -23,7 +20,7 @@ int main(int argc, char *argv[]) {
     QString style = styleFile.readAll();
     a.setStyleSheet(style);
 
-    if(not QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).exists()){
+    if(! QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).exists()){
         QDir().mkdir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));
     }
     if(! QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)+"/clash_log").exists()){
@@ -34,5 +31,3 @@ int main(int argc, char *argv[]) {
 
     return a.exec();
 }
-
-#pragma clang diagnostic pop

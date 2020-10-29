@@ -12,10 +12,15 @@ namespace Clash{
     public:
         RestfulApi();
 
+        void listenConfig();
+        void stopListenConfig();
+
         void listenTraffic();
         void stopListenTraffic();
+
         void listenLog();
         void stopListenLog();
+
         void updateConnection();
         void updateProxy();
         void updateProxySelector(QString group, QString name);

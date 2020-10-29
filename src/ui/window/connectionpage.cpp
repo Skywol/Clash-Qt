@@ -1,13 +1,7 @@
-//
-// Created by cyril on 2020/10/22.
-//
-
 #include "connectionpage.h"
 #include "clash/restfulapi.h"
 #include "util/instance.h"
 #include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QAbstractTableModel>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -31,7 +25,7 @@ public:
         if (role == Qt::DisplayRole && orientation == Qt::Orientation::Horizontal){
             switch (section) {
                 case 0: return tr("Start Time");
-                case 1: return tr("Network Type");
+                case 1: return tr("Type");
                 case 2: return tr("Source");
                 case 3: return tr("Destination");
                 case 4: return tr("Proxy");
@@ -46,7 +40,10 @@ public:
         if(role == Qt::DisplayRole){
             switch (index.column()) {
                 case 0: // Start Time
-                    return connections.at(index.row())["start"].toString("");
+                {
+                    QString timeStr = connections.at(index.row())["start"].toString("");
+                    return timeStr.mid(timeStr.indexOf("T") + 1, timeStr.indexOf(".")-timeStr.indexOf("T")-1);
+                }
                 case 1: return connections.at(index.row())["metadata"]["network"].toString("");
                 case 2: return connections.at(index.row())["metadata"]["sourceIP"].toString("") + ":" + connections.at(index.row())["metadata"]["sourcePort"].toString("");
                 case 3: return connections.at(index.row())["metadata"]["host"].toString("") +"("
@@ -55,6 +52,19 @@ public:
             }
         }
         return QVariant();
+    }
+    QString getId(int row){
+        if (row < 0 || row >= connections.count()) {return QString();}
+        return connections.at(row)["id"].toString();
+    }
+
+    int getRow(QString &id){
+        for (int i = 0; i < connections.count(); ++i) {
+            if (id == connections.at(i)["id"].toString()){
+                return i;
+            }
+        }
+        return -1;
     }
 
     void updateData(QJsonArray data){
@@ -77,6 +87,7 @@ ConnectionPage::ConnectionPage(QWidget *parent) :QWidget(parent){
     table->verticalHeader()->hide();
     table->setModel(model);
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents );
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
     layout->addWidget(table);
 
     connect(&getInstance<Clash::RestfulApi>(), &Clash::RestfulApi::connectionDataReceived, this, [this](QByteArray json){
@@ -86,7 +97,16 @@ ConnectionPage::ConnectionPage(QWidget *parent) :QWidget(parent){
             auto obj = document.object();
             auto connectionArray = obj["connections"];
             if (connectionArray.isArray()){
+                auto selection = table->selectionModel()->selection();
+                auto selected = !selection.indexes().empty();
+                QString id = selected?model->getId(selection.indexes().at(0).row()):"";
                 model->updateData(connectionArray.toArray());
+                if (selected){
+                    int row = model->getRow(id);
+                    if (row != -1){
+                        table->selectRow(row);
+                    }
+                }
             }
         } else{
             qDebug()<<"Fail to parse Connection Data [" + error.errorString() + "]: " + json;

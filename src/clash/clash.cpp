@@ -3,16 +3,15 @@
 //
 
 #include "clash.h"
+#include "util/instance.h"
+#include <QStandardPaths>
 
-Clash::Clash::Clash(QObject *parent){
-    process = new QProcess(this);
-    process->setProgram("./clash");
+Clash::Clash::Clash(QString program, QObject *parent)
+:QProcess(parent), program(program), restfulApi(getInstance<RestfulApi>()){
+
 }
 
 void Clash::Clash::start() {
-    process->start();
-}
-
-void Clash::Clash::stop() {
-    process->kill();
-}
+    setProgram(program);
+    QProcess::start();
+};

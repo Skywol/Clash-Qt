@@ -100,6 +100,7 @@ QWidget(parent)
     table->setModel(model);
     table->verticalHeader()->hide();
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents );
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
 
     layout->addWidget(table);
 
