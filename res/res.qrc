@@ -1,10 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>icon/clash.png</file>
-        <file>icon/delete.png</file>
-        <file>default/clash-config.yaml</file>
         <file>style.qss</file>
-        <file>icon/arrow-down.svg</file>
-        <file>icon/arrow-up.svg</file>
     </qresource>
 </RCC>

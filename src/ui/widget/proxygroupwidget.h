@@ -1,14 +1,14 @@
 #ifndef PROXYGROUPWIDGET_H
 #define PROXYGROUPWIDGET_H
 
-#include "ui/util/flowlayout.h"
-#include "proxywidget.h"
 #include <KCollapsibleGroupBox>
 #include <QJsonObject>
 
+#include "proxywidget.h"
+#include "ui/util/flowlayout.h"
 
-class ProxyGroupWidget : public KCollapsibleGroupBox
-{
+
+class ProxyGroupWidget : public KCollapsibleGroupBox {
     Q_OBJECT
 
 public:
@@ -22,4 +22,4 @@ private:
     FlowLayout *flowLayout;
 };
 
-#endif // PROXYGROUPWIDGET_H
+#endif  // PROXYGROUPWIDGET_H

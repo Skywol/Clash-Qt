@@ -29,8 +29,7 @@
 #include <QLayout>
 #include <QStyle>
 
-class FlowLayout : public QLayout
-{
+class FlowLayout : public QLayout {
 public:
     explicit FlowLayout(QWidget *parent, int margin = -1, int hSpacing = -1, int vSpacing = -1);
     FlowLayout(int margin = -1, int hSpacing = -1, int vSpacing = -1);
@@ -57,10 +56,10 @@ private:
     int doLayout(const QRect &rect, bool testOnly) const;
     int smartSpacing(QStyle::PixelMetric pm) const;
 
-QList<QLayoutItem *> itemList;
-int m_hSpace;
-int m_vSpace;
+    QList<QLayoutItem *> itemList;
+    int m_hSpace;
+    int m_vSpace;
 };
 
 
-#endif //CLASH_QT_FLOWLAYOUT_H
+#endif  // CLASH_QT_FLOWLAYOUT_H

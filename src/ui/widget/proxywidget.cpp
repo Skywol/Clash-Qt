@@ -1,14 +1,14 @@
 #include "proxywidget.h"
-#include "clash/restfulapi.h"
-#include "util/instance.h"
-#include <QStyleOption>
-#include <QPainter>
-#include <QMouseEvent>
-#include <QSizePolicy>
 
-ProxyWidget::ProxyWidget(const QString &groupName, const QString &name, QWidget *parent) :
-    QWidget(parent), checked(false)
-{
+#include <QMouseEvent>
+#include <QPainter>
+#include <QSizePolicy>
+#include <QStyleOption>
+
+#include "clash/clash.h"
+#include "util/instance.h"
+
+ProxyWidget::ProxyWidget(const QString& groupName, const QString& name, QWidget* parent) : QWidget(parent), checked(false) {
     setObjectName("ProxyWidget");
     layout = new QHBoxLayout;
     proxy = new QLabel();
@@ -28,7 +28,7 @@ ProxyWidget::ProxyWidget(const QString &groupName, const QString &name, QWidget 
     setGroup(groupName);
 }
 
-void ProxyWidget::paintEvent(QPaintEvent *event) {
+void ProxyWidget::paintEvent(QPaintEvent* event) {
     QStyleOption opt;
     opt.init(this);
     opt.state = checked ? QStyle::State_On : QStyle::State_Off;
@@ -36,13 +36,11 @@ void ProxyWidget::paintEvent(QPaintEvent *event) {
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }
 
-QString ProxyWidget::getName() {
-    return proxy->text();
-}
+QString ProxyWidget::getName() { return proxy->text(); }
 
-void ProxyWidget::setName(const QString &name) {
+void ProxyWidget::setName(const QString& name) {
     proxy->setText(name);
-    setProperty("name",name);
+    setProperty("name", name);
 }
 
 void ProxyWidget::setChecked(bool checked) {
@@ -50,19 +48,10 @@ void ProxyWidget::setChecked(bool checked) {
     update();
 }
 
-void ProxyWidget::mouseReleaseEvent(QMouseEvent *event) {
-    if(event->pos().x()<geometry().width() && event->pos().y() < geometry().height()){
-        getInstance<Clash::RestfulApi>().updateProxySelector(
-                property("group").toString(),
-                property("name").toString()
-        );
+void ProxyWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (event->pos().x() < geometry().width() && event->pos().y() < geometry().height()) {
+        getInstance<Clash::RestfulApi>().updateProxySelector(property("group").toString(), property("name").toString(), true);
     }
-
 }
 
-void ProxyWidget::setGroup(const QString &group) {
-    setProperty("group", group);
-}
-
-
-
+void ProxyWidget::setGroup(const QString& group) { setProperty("group", group); }

@@ -5,13 +5,13 @@
 #ifndef CLASH_QT_LOGPAGE_H
 #define CLASH_QT_LOGPAGE_H
 
-#include <QWidget>
 #include <QPushButton>
 #include <QTableView>
+#include <QWidget>
 
 class LogTableModel;
 
-class LogPage : public QWidget{
+class LogPage : public QWidget {
 public:
     LogPage(QWidget *parent = nullptr);
 
@@ -22,4 +22,4 @@ private:
 };
 
 
-#endif //CLASH_QT_LOGPAGE_H
+#endif  // CLASH_QT_LOGPAGE_H

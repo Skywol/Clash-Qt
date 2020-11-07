@@ -5,12 +5,12 @@
 #ifndef CLASH_QT_CONNECTIONPAGE_H
 #define CLASH_QT_CONNECTIONPAGE_H
 
-#include <QWidget>
 #include <QTableView>
+#include <QWidget>
 
 class ConnectionModel;
 
-class ConnectionPage : public QWidget{
+class ConnectionPage : public QWidget {
     Q_OBJECT
 
 public:
@@ -22,4 +22,4 @@ private:
 };
 
 
-#endif //CLASH_QT_CONNECTIONPAGE_H
+#endif  // CLASH_QT_CONNECTIONPAGE_H

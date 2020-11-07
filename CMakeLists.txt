@@ -20,18 +20,14 @@ find_package(yaml-cpp CONFIG REQUIRED)
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
+file(COPY default/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/default/)
+
 include_directories(src)
 
-set(src_files
-        src/main.cpp
-        src/ui/window/mainwindow.cpp src/ui/window/mainwindow.h
-        src/clash/clash.cpp src/clash/clash.h src/clash/restfulapi.cpp src/clash/restfulapi.h
-        src/ui/widget/proxywidget.h src/ui/widget/proxywidget.cpp
-        src/ui/widget/proxygroupwidget.h src/ui/widget/proxygroupwidget.cpp
-        src/ui/window/proxypage.h src/ui/window/proxypage.cpp
-        src/ui/util/flowlayout.cpp src/ui/util/flowlayout.h src/ui/widget/netspeedlabel.cpp src/ui/widget/netspeedlabel.h src/ui/window/logpage.cpp src/ui/window/logpage.h)
+file(GLOB_RECURSE src_files src/*.h src/*.cpp)
 
-set(res_files res/res.qrc src/util/instance.h src/ui/window/connectionpage.cpp src/ui/window/connectionpage.h)
+set(res_files res/res.qrc)
+
 add_executable(clash-qt ${src_files} ${res_files})
 
 target_link_libraries(clash-qt

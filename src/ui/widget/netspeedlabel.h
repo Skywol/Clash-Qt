@@ -5,10 +5,10 @@
 #ifndef CLASH_QT_NETSPEEDLABEL_H
 #define CLASH_QT_NETSPEEDLABEL_H
 
-#include <QWidget>
 #include <QLabel>
+#include <QWidget>
 
-class NetSpeedLabel : public QWidget{
+class NetSpeedLabel : public QWidget {
     Q_OBJECT
 public:
     NetSpeedLabel(QWidget *parent = nullptr);
@@ -20,4 +20,4 @@ private:
 };
 
 
-#endif //CLASH_QT_NETSPEEDLABEL_H
+#endif  // CLASH_QT_NETSPEEDLABEL_H

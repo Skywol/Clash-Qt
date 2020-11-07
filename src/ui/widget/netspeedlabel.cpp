@@ -3,11 +3,10 @@
 //
 
 #include "netspeedlabel.h"
+
 #include <QHBoxLayout>
 
-NetSpeedLabel::NetSpeedLabel(QWidget *parent):
-    QWidget(parent)
-{
+NetSpeedLabel::NetSpeedLabel(QWidget *parent) : QWidget(parent) {
     QHBoxLayout *layout = new QHBoxLayout;
     setLayout(layout);
 
@@ -22,11 +21,11 @@ NetSpeedLabel::NetSpeedLabel(QWidget *parent):
     layout->addWidget(down_data);
 }
 
-QString netSpeedStr(int speed){
+QString netSpeedStr(int speed) {
     const static QStringList uint = {"B/s", "KB/s", "MB/s", "GB/s"};
     float speed_f = speed;
     int count = 0;
-    while(speed_f > 1000 && count < uint.size()-1){
+    while (speed_f > 1000 && count < uint.size() - 1) {
         speed_f /= 1024;
         count++;
     }

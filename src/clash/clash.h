@@ -1,26 +1,79 @@
 #ifndef CLASH_QT_CLASH_H
 #define CLASH_QT_CLASH_H
 
-#include "restfulapi.h"
 #include <QObject>
-#include <QProcess>
+#include <QtCore/QDateTime>
+#include <QtCore/QMap>
 
-namespace Clash{
-    enum Mode{
-        RULE, GLOBAL, DIRECT
-    };
+#include "yaml-cpp/yaml.h"
 
-    class Clash : public QProcess{
-    Q_OBJECT
-    public:
-        explicit Clash(QString program = "./clash", QObject *parent = nullptr);
-        void start();
-    private:
-        QString program;
-        RestfulApi &restfulApi;
-    };
+namespace YAML {
+class Node;
 }
 
+class QProcess;
+class QTimer;
+class QNetworkAccessManager;
+class QNetworkReply;
+
+class Clash : public QObject {
+public:
+    enum Mode { RULE, GLOBAL, DIRECT };
+    class RestfulApi;
+
+public:
+    explicit Clash(QString program = "./clash", QString clash_dir = "", QObject *parent = nullptr);
+    void start();
+    void stop();
+    bool checkFiles();
+    RestfulApi *api();
+    void switchProfile(QString name);
+
+private:
+    QProcess *process;
+    RestfulApi *restfulApi;
+    QString clash_program, clash_dir;
+};
+
+class Clash::RestfulApi : public QObject {
+    Q_OBJECT
+public:
+    RestfulApi(QObject *parent = nullptr);
+
+    void testConnection();
+
+    void listenTraffic();
+    void stopListenTraffic();
+
+    void listenLog();
+    void stopListenLog();
+
+    void updateConfig();
+    void updateConnection();
+    void updateProxy();
+    void updateProxySelector(QString group, QString name, bool update);
+
+    void autoUpdateProxy(bool enable = true, int interval_ms = 1000);
+    void autoUpdateConnection(bool enable = true, int interval_ms = 1000);
+    void autoUpdateConfig(bool enable = true, int interval_ms = 1000);
+
+    void updateProfile(QString filename);
+
+signals:
+    void connected();
+    void configUpdate(QByteArray rawJson);
+    void trafficUpdate(int up, int down);
+    void logReceived(QString type, QString payload);
+    void errorHappened(QString content);
+    void proxyDataReceived(QByteArray rawJson);
+    void connectionDataReceived(QByteArray rawJson);
+
+private:
+    QString url;
+    QNetworkAccessManager *manager;
+    QNetworkReply *traffic, *log, *connection;
+    QTimer *proxyTimer, *connectionTimer, *configTimer;
+};
 
 
-#endif //CLASH_QT_CLASH_H
+#endif  // CLASH_QT_CLASH_H
