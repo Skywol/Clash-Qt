@@ -75,11 +75,10 @@ void ProxyPage::updateData(QByteArray rawJson) {
                     widget->updateData(obj["Proxy"].toObject());
                 }
             }
-            int totalsize = 0;
-            for (int i = 0; i < groupList.count(); i++) {
+            int i;
+            for (i = 0; i < groupList.count(); i++) {
                 auto type = obj[groupList.at(i)].toObject()["type"].toString();
                 if (type != "Selector" && type != "URLTest" && type != "Direct" && type != "Reject") {
-                    totalsize = i;
                     break;
                 }
                 if (i == proxy_index) {
@@ -98,7 +97,7 @@ void ProxyPage::updateData(QByteArray rawJson) {
             }
 
             // Delete extra item
-            for (int i = totalsize + 1; i < groupLayout->count(); i++) {
+            for (; i < groupLayout->count(); i++) {
                 auto item = groupLayout->takeAt(i);
                 if (item != nullptr) {
                     delete item->widget();
