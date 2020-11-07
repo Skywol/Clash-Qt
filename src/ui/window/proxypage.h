@@ -1,30 +1,30 @@
 #ifndef PROXYPAGE_H
 #define PROXYPAGE_H
 
-#include <QHBoxLayout>
-#include <QScrollArea>
-#include <QStandardPaths>
-#include <QVBoxLayout>
+#include <QMap>
+#include <QTreeWidgetItem>
 #include <QWidget>
 
-#include "clash/clash.h"
-#include "yaml-cpp/yaml.h"
+namespace Ui {
+class ProxyPage;
+}
 
 class ProxyPage : public QWidget {
     Q_OBJECT
 
 public:
-    explicit ProxyPage(QWidget *parent = nullptr);
+    const static QStringList display_type;
 
-    void updateData(QByteArray rawJson);
-    void setMode(Clash::Mode mode);
+    explicit ProxyPage(QWidget *parent = nullptr);
+    ~ProxyPage();
+    void updateProxies(QByteArray rawjson);
+    void updateGroup(const QJsonObject &proxies, QString group, QTreeWidgetItem *item);
 
 private:
-    YAML::Node *node;
-    Clash::Mode mode;
-    QHBoxLayout *headerArea;
-    QVBoxLayout *groupLayout;
-    QScrollArea *groupArea;
+    Ui::ProxyPage *ui;
+    QStringList groups;
+    QMap<QString, QTreeWidgetItem *> group_items;
+    QMap<QString, QStringList> group_proxies;
 };
 
 #endif  // PROXYPAGE_H

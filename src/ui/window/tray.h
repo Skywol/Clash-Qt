@@ -9,6 +9,7 @@ public:
 
 public slots:
     void onActivate(QSystemTrayIcon::ActivationReason reason);
+    void onReceiveError(QString content);
 
 private:
     QMenu *menu;

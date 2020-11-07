@@ -1,25 +1,23 @@
 #ifndef PROXYGROUPWIDGET_H
 #define PROXYGROUPWIDGET_H
 
-#include <KCollapsibleGroupBox>
-#include <QJsonObject>
+#include <QWidget>
 
-#include "proxywidget.h"
-#include "ui/util/flowlayout.h"
+namespace Ui {
+class ProxyGroupWidget;
+}
 
-
-class ProxyGroupWidget : public KCollapsibleGroupBox {
+class ProxyGroupWidget : public QWidget {
     Q_OBJECT
 
 public:
-    explicit ProxyGroupWidget(QWidget *parent = nullptr);
-    void updateData(const QJsonObject &group);
+    explicit ProxyGroupWidget(QString group = "", QString selected = "", QString type = "", QWidget* parent = nullptr);
+    ~ProxyGroupWidget() override;
 
-protected:
-    void resizeEvent(QResizeEvent *event) override;
+    void setSelected(const QString& selected);
 
 private:
-    FlowLayout *flowLayout;
+    Ui::ProxyGroupWidget* ui;
 };
 
 #endif  // PROXYGROUPWIDGET_H

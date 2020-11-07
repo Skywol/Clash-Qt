@@ -1,133 +1,101 @@
 #include "proxypage.h"
 
-#include <ui/widget/proxygroupwidget.h>
+#include <clash/clash.h>
 
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QTimer>
-#include <QtCore/QFile>
+#include <QJsonParseError>
 
-#include "clash/clash.h"
+#include "ui/widget/proxygroupwidget.h"
+#include "ui/widget/proxywidget.h"
+#include "ui_proxypage.h"
 #include "util/instance.h"
 
-ProxyPage::ProxyPage(QWidget *parent) : QWidget(parent) {
-    auto layout = new QVBoxLayout;
-    setLayout(layout);
-
-    headerArea = new QHBoxLayout;
-    layout->addLayout(headerArea);
-    headerArea->setAlignment(Qt::AlignmentFlag::AlignCenter);
-
-
-    groupArea = new QScrollArea;
-    groupLayout = new QVBoxLayout;
-    QWidget *inner = new QWidget;
-    QVBoxLayout *innerLayout = new QVBoxLayout;
-    inner->setLayout(innerLayout);
-    innerLayout->addLayout(groupLayout);
-    innerLayout->addStretch();
-    groupArea->setWidgetResizable(true);
-    groupArea->setWidget(inner);
-    layout->addWidget(groupArea);
-    groupArea->setAlignment(Qt::AlignmentFlag::AlignTop);
-    setMode(Clash::RULE);
-    connect(getInstance<Clash>().api(), &Clash::RestfulApi::proxyDataReceived, this, &ProxyPage::updateData);
-
-    QFile lastStatus(QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.config/clash/status.yaml");
-    if (lastStatus.exists()) {
-        lastStatus.open(QIODevice::ReadOnly);
-        node = new YAML::Node(YAML::Load(lastStatus.readAll().toStdString()));
-        lastStatus.close();
-    } else {
-        node = new YAML::Node;
-    }
+ProxyPage::ProxyPage(QWidget *parent) : QWidget(parent), ui(new Ui::ProxyPage) {
+    ui->setupUi(this);
+    connect(getInstance<Clash>().api(), &Clash::RestfulApi::proxyDataReceived, this, &ProxyPage::updateProxies);
 }
 
-
-void ProxyPage::updateData(QByteArray rawJson) {
+ProxyPage::~ProxyPage() { delete ui; }
+void ProxyPage::updateProxies(QByteArray rawjson) {
     QJsonParseError error{};
-    QJsonDocument document = QJsonDocument::fromJson(rawJson, &error);
-    if (error.error == QJsonParseError::NoError) {
-        QJsonObject obj = document.object()["proxies"].toObject();
-        if (obj.isEmpty()) {
-            qDebug() << "Can not parse data (empty): " << rawJson << "Reason: ";
-            return;
+    QJsonDocument document = QJsonDocument::fromJson(rawjson, &error);
+    if (error.error != QJsonParseError::NoError) {
+        qDebug() << "Failed to parse proxy data" << error.errorString();
+        qDebug() << rawjson;
+        return;
+    }
+    QJsonObject obj = document.object();
+    if (!obj.contains("proxies")) {
+        qDebug() << "Error Proxy Data. No proxies found";
+        return;
+    }
+    QJsonObject proxies = obj["proxies"].toObject();
+    QStringList groupList = proxies.keys();
+    if (groups == groupList) {
+        // group not change
+        for (auto groupName : groupList) {
+            auto item = group_items.value(groupName);
+            if (item == nullptr) {
+                continue;
+            }
+            updateGroup(proxies, groupName, item);
         }
-        int current_item_number = groupLayout->count();
-        if (mode == Clash::RULE) {  // Do not display GLOBAL, DIRECT
-            QList<QString> groupList;
-            static QSet<QString> hiddenList = {"DIRECT", "GLOBAL"};
-            for (auto name : obj.keys()) {
-                if (!hiddenList.contains(name)) {
-                    groupList.append(name);
-                }
-            }
-            int proxy_index = groupList.indexOf("Proxy");  // record Group Proxy index to display it first;
-
-            // Deal Proxy First
-            if (proxy_index >= 0) {
-                if (current_item_number == 0) {
-                    auto widget = new ProxyGroupWidget(this);
-                    widget->updateData(obj["Proxy"].toObject());
-                    groupLayout->addWidget(widget);
-                } else {
-                    auto widget = dynamic_cast<ProxyGroupWidget *>(groupLayout->itemAt(0)->widget());
-                    widget->updateData(obj["Proxy"].toObject());
-                }
-            }
-            int i;
-            for (i = 0; i < groupList.count(); i++) {
-                auto type = obj[groupList.at(i)].toObject()["type"].toString();
-                if (type != "Selector" && type != "URLTest" && type != "Direct" && type != "Reject") {
-                    break;
-                }
-                if (i == proxy_index) {
-                    continue;
-                }
-                int index = (i < proxy_index) ? i + 1 : i;
-
-                if (index >= current_item_number) {
-                    auto widget = new ProxyGroupWidget(this);
-                    widget->updateData(obj[groupList.at(i)].toObject());
-                    groupLayout->addWidget(widget);
-                } else {
-                    auto widget = dynamic_cast<ProxyGroupWidget *>(groupLayout->itemAt(index)->widget());
-                    widget->updateData(obj[groupList.at(i)].toObject());
-                }
-            }
-
-            // Delete extra item
-            for (; i < groupLayout->count(); i++) {
-                auto item = groupLayout->takeAt(i);
-                if (item != nullptr) {
-                    delete item->widget();
-                    delete item;
-                }
-            }
-        } else if (mode == Clash::GLOBAL) {  // Display Global group only
-            if (groupLayout->count() == 0) {
-                ProxyGroupWidget *widget = new ProxyGroupWidget(this);
-                widget->updateData(obj["GLOBAL"].toObject());
-                groupLayout->addWidget(widget);
-            } else {
-                auto widget = dynamic_cast<ProxyGroupWidget *>(groupLayout->itemAt(0)->widget());
-                widget->updateData(obj["GLOBAL"].toObject());
-                // widget->expand();
-                while (auto item = groupLayout->takeAt(1)) {
-                    delete item->widget();
-                    delete item;
-                }
-            }
-        } else {  // Do not display in other mode
-            while (auto item = groupLayout->takeAt(0)) {
-                delete item->widget();
-                delete item;
-            }
-        }
-
     } else {
-        qDebug() << "Can not parse data: " << rawJson << "Reason: " << error.errorString();
+        // clear data if group changed
+        ui->treeWidget->clear();
+        group_items.clear();
+        this->groups = groupList;
+        for (const auto &groupName : groups) {
+            auto proxyGroup = proxies[groupName].toObject();
+            QString type = proxyGroup["type"].toString();
+            if (type != "Selector") {
+                continue;
+            }
+            ProxyGroupWidget *groupWidget = new ProxyGroupWidget(groupName, proxyGroup["now"].toString("NULL"), type, this);
+            QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
+            group_items[groupName] = item;
+            if (groupName == "Proxy") {
+                ui->treeWidget->insertTopLevelItem(0, item);
+            } else {
+                ui->treeWidget->insertTopLevelItem(ui->treeWidget->topLevelItemCount(), item);
+            }
+            ui->treeWidget->setItemWidget(item, 0, groupWidget);
+            updateGroup(proxies, groupName, item);
+        }
     }
 }
-
-void ProxyPage::setMode(Clash::Mode mode) { this->mode = mode; }
+void ProxyPage::updateGroup(const QJsonObject &proxies, QString group, QTreeWidgetItem *item) {
+    auto array = proxies[group].toObject()["all"].toArray();
+    QStringList list;
+    for (auto it = array.begin(); it != array.end(); it++) {
+        list.append((*it).toString("Error"));
+    }
+    if (group_proxies.value(group) == list) {
+        // proxies in this group not changed.
+    } else {
+        group_proxies[group] = list;
+        // remove previous data;
+        for (int i = 0; i < item->childCount(); ++i) {
+            auto child = item->child(i);
+            delete ui->treeWidget->itemWidget(child, 0);
+            item->removeChild(child);
+            delete child;
+        }
+        // add new data
+        for (const auto &proxy_name : list) {
+            ProxyWidget *widget = new ProxyWidget(group, proxy_name, "null", this);
+            QTreeWidgetItem *child = new QTreeWidgetItem(item);
+            item->addChild(child);
+            ui->treeWidget->setItemWidget(child, 0, widget);
+        }
+    }
+    QString selected = proxies[group].toObject()["now"].toString("NAN");
+    static_cast<ProxyGroupWidget *>(ui->treeWidget->itemWidget(item, 0))->setSelected(selected);
+    for (int i = 0; i < item->childCount(); ++i) {
+        auto child_item = item->child(i);
+        auto proxy_widget = static_cast<ProxyWidget *>(ui->treeWidget->itemWidget(child_item, 0));
+        child_item->setSelected(proxy_widget->getName() == selected);
+    }
+}

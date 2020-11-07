@@ -22,6 +22,8 @@ Tray::Tray(QObject *parent) : QSystemTrayIcon(parent) {
     menu->addAction(quit);
     connect(quit, &QAction::triggered, this, [] { qApp->quit(); });
     setContextMenu(menu);
+
+    connect(getInstance<Clash>().api(), &Clash::RestfulApi::errorHappened, this, &Tray::onReceiveError);
 }
 void Tray::onActivate(QSystemTrayIcon::ActivationReason reason) {
     switch (reason) {
@@ -33,3 +35,4 @@ void Tray::onActivate(QSystemTrayIcon::ActivationReason reason) {
         default:;
     }
 }
+void Tray::onReceiveError(QString content) { this->showMessage("Error Happened", content, MessageIcon::Warning); }

@@ -5,23 +5,24 @@
 #include <QLabel>
 #include <QWidget>
 
+namespace Ui {
+class ProxyWidget;
+}
+
 class ProxyWidget : public QWidget {
     Q_OBJECT
 public:
-    explicit ProxyWidget(const QString &groupName = "", const QString &name = "", QWidget *parent = nullptr);
+    explicit ProxyWidget(const QString &groupName = "", const QString &name = "", const QString &type = "", QWidget *parent = nullptr);
     QString getName();
-    void setName(const QString &name);
-    void setGroup(const QString &group);
-    void setChecked(bool checked);
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
 
+protected:
 private:
-    bool checked;
-    QHBoxLayout *layout;
-    QLabel *proxy, *lag;
+    Ui::ProxyWidget *ui;
+    QString group;
+    QString name;
 };
 
 #endif  // PROXYWIDGET_H

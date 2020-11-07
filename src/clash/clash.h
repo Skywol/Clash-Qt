@@ -51,7 +51,7 @@ public:
     void updateConfig();
     void updateConnection();
     void updateProxy();
-    void updateProxySelector(QString group, QString name, bool update);
+    void updateProxySelector(QString group, QString name, bool update = true);
 
     void autoUpdateProxy(bool enable = true, int interval_ms = 1000);
     void autoUpdateConnection(bool enable = true, int interval_ms = 1000);
@@ -67,6 +67,8 @@ signals:
     void errorHappened(QString content);
     void proxyDataReceived(QByteArray rawJson);
     void connectionDataReceived(QByteArray rawJson);
+    void successChangeProfile();
+    void failedChangeProfile(QString reason);
 
 private:
     QString url;

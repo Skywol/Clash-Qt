@@ -14,7 +14,6 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Network)
-find_package(KF5WidgetsAddons)
 find_package(yaml-cpp CONFIG REQUIRED)
 
 
@@ -32,6 +31,5 @@ add_executable(clash-qt ${src_files} ${res_files})
 
 target_link_libraries(clash-qt
         Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network
-        KF5::WidgetsAddons
         yaml-cpp
         )

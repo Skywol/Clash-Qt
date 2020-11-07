@@ -279,10 +279,14 @@ void Clash::RestfulApi::updateProfile(QString filename) {
     auto reply = manager->put(request, QJsonDocument(obj).toJson(QJsonDocument::Compact));
     connect(reply, &QNetworkReply::finished, this, [reply, this] {
         if (reply->error() != QNetworkReply::NoError) {
-            qDebug() << reply->errorString();
+            QJsonParseError error{};
+            QJsonDocument document == QJsonDocument::fromJson(reply->readAll(), &error);
+            if (error.error != QJsonParseError::NoError) {
+                emit failedChangeProfile(document.object().value("message").toString("NO MESSAGE."));
+            }
         } else {
+            emit successChangeProfile();
             updateProxy();
         }
-        qDebug() << reply->readAll();
     });
 }

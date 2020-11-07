@@ -17,6 +17,8 @@ void signalhandler(int sig) {
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
+    signal(SIGINT, signalhandler);
+
     a.setApplicationName("Clash-Qt");
     a.setWindowIcon(QIcon(":/icon/clash.png"));
     a.setQuitOnLastWindowClosed(false);
@@ -25,9 +27,10 @@ int main(int argc, char *argv[]) {
     styleFile.open(QIODevice::ReadOnly);
     QString style = styleFile.readAll();
     a.setStyleSheet(style);
+
     getInstance<MainWindow>();
     getInstance<Tray>().show();
     getInstance<Clash>().start();
-    signal(SIGINT, signalhandler);
+
     return a.exec();
 }
