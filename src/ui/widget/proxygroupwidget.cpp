@@ -13,7 +13,6 @@ ProxyGroupWidget::ProxyGroupWidget(QString group, QString selected, QString type
 }
 
 ProxyGroupWidget::~ProxyGroupWidget() {
-    QWidget::~QWidget();
     delete ui;
 }
 void ProxyGroupWidget::setSelected(const QString& selected) { ui->selected->setText(selected); }

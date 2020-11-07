@@ -19,6 +19,7 @@ Clash::Clash(QString program, QString clash_dir, QObject *parent) : QObject(pare
     restfulApi = new RestfulApi(this);
     this->clash_program = std::move(program);
     this->clash_dir = std::move(clash_dir);
+    process->setStandardOutputFile("./log.txt");
 
     connect(restfulApi, &RestfulApi::connected, this, [this] {
         qDebug() << "Start Listing";
@@ -280,7 +281,7 @@ void Clash::RestfulApi::updateProfile(QString filename) {
     connect(reply, &QNetworkReply::finished, this, [reply, this] {
         if (reply->error() != QNetworkReply::NoError) {
             QJsonParseError error{};
-            QJsonDocument document == QJsonDocument::fromJson(reply->readAll(), &error);
+            QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &error);
             if (error.error != QJsonParseError::NoError) {
                 emit failedChangeProfile(document.object().value("message").toString("NO MESSAGE."));
             }
