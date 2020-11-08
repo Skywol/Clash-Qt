@@ -1,33 +1,50 @@
-#ifndef CLASH_QT_MAINWINDOW_H
-#define CLASH_QT_MAINWINDOW_H
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QTabWidget>
+#include <QMap>
 
 #include "clash/clash.h"
 
+namespace Ui {
+class MainWindow;
+}
+class QTreeWidgetItem;
+class QButtonGroup;
+class QAbstractButton;
 class NetSpeedLabel;
 
 class MainWindow : public QMainWindow {
+    Q_OBJECT
+
 public:
     explicit MainWindow(QWidget *parent = nullptr);
 
-    static MainWindow &getInstance() {
-        static MainWindow instance;
-        return instance;
-    }
+    void onLogLevelClicked(QAbstractButton *button);
+    void onModeClicked(QAbstractButton *button);
+    void onConfigUpdate(const QByteArray &rawJson);
 
-public slots:
-    void onTabChange(int index);
+    void updateProxies(const QByteArray &rawjson);
+    void updateGroup(const QJsonObject &proxies, QString group, QTreeWidgetItem *item);
+
+    void loadProfiles();
+    void onProfileChanged(int index);
+
     void onClashStarted();
 
 private:
-    QTabWidget *tabWidget;
+    Ui::MainWindow *ui;
     Clash &clash;
 
-    int proxyTab;
-    NetSpeedLabel *netSpeedLabel;
+    QButtonGroup *log_level_group, *model_group;
+
+    QStringList groups;
+    QMap<QString, QTreeWidgetItem *> group_items;
+    QMap<QString, QStringList> group_proxies;
+
+    QList<Clash::Profile> profile_list;
+
+    NetSpeedLabel *net_speed_label;
 };
 
-
-#endif  // CLASH_QT_MAINWINDOW_H
+#endif  // MAINWINDOW_H

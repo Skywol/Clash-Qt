@@ -48,7 +48,7 @@ public:
                 case 0:  // Start Time
                 {
                     QString timeStr = connections.at(index.row())["start"].toString("");
-                    return timeStr.mid(timeStr.indexOf("T") + 1, timeStr.indexOf(".") - timeStr.indexOf("T") - 1);
+                    return QDateTime::fromString(timeStr, Qt::ISODateWithMs).toString("hh:mm:ss");
                 }
                 case 1:
                     return connections.at(index.row())["metadata"]["network"].toString("");

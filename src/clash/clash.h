@@ -18,7 +18,13 @@ class QNetworkReply;
 
 class Clash : public QObject {
 public:
-    enum Mode { RULE, GLOBAL, DIRECT };
+    struct Profile {
+        QString name;
+        QString url;
+        QString file;
+        QDateTime updatedTime;
+        int interval;
+    };
     class RestfulApi;
 
 public:

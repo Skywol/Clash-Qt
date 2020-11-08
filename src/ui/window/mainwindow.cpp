@@ -1,33 +1,237 @@
 #include "mainwindow.h"
 
-#include <QApplication>
-#include <QIcon>
-#include <QLabel>
-#include <QTimer>
-#include <QtWidgets/QStatusBar>
+#include <yaml-cpp/yaml.h>
 
-#include "connectionpage.h"
-#include "logpage.h"
-#include "profilepage.h"
-#include "proxypage.h"
+#include <QButtonGroup>
+#include <QDebug>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
+#include <QStandardPaths>
+
+#include "clash/clash.h"
 #include "ui/widget/netspeedlabel.h"
+#include "ui/widget/proxygroupwidget.h"
+#include "ui/widget/proxywidget.h"
+#include "ui_mainwindow.h"
 #include "util/instance.h"
 
-MainWindow::MainWindow(QWidget *parent) : clash(::getInstance<Clash>()) {
-    setWindowTitle(QApplication::applicationName());
-    resize(800, 600);
-    tabWidget = new QTabWidget(this);
-    setCentralWidget(tabWidget);
-    tabWidget->addTab(new ProxyPage(this), tr("Proxy"));
-    tabWidget->addTab(new LogPage(this), tr("Log"));
-    tabWidget->addTab(new ConnectionPage, tr("Connection"));
-    tabWidget->addTab(new ProfilePage, tr("Profile"));
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), clash(getInstance<Clash>()) {
+    ui->setupUi(this);
 
-    QStatusBar *bar = statusBar();
-    netSpeedLabel = new NetSpeedLabel(this);
-    bar->addPermanentWidget(netSpeedLabel);
-    connect(clash.api(), &Clash::RestfulApi::trafficUpdate, netSpeedLabel, &NetSpeedLabel::setSpeed);
-    connect(tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabChange);
+    QValidator *portValidator = new QIntValidator(0, 65565, this);
+    ui->mixedPort->setValidator(portValidator);
+    ui->httpPort->setValidator(portValidator);
+    ui->socksPort->setValidator(portValidator);
+
+    log_level_group = new QButtonGroup(this);
+    log_level_group->setExclusive(true);
+    log_level_group->addButton(ui->debug);
+    log_level_group->addButton(ui->info);
+    log_level_group->addButton(ui->warning);
+    log_level_group->addButton(ui->error);
+    connect(log_level_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), this, &MainWindow::onLogLevelClicked);
+
+    model_group = new QButtonGroup(this);
+    model_group->addButton(ui->global);
+    model_group->addButton(ui->rule);
+    model_group->addButton(ui->direct);
+    connect(model_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), this, &MainWindow::onModeClicked);
+
+    connect(clash.api(), &Clash::RestfulApi::configUpdate, this, &MainWindow::onConfigUpdate);
+
+    loadProfiles();
+    connect(getInstance<Clash>().api(), &Clash::RestfulApi::proxyDataReceived, this, &MainWindow::updateProxies);
+    connect(ui->profile, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onProfileChanged);
+
+    net_speed_label = new NetSpeedLabel(this);
+    statusBar()->addPermanentWidget(net_speed_label);
+    connect(clash.api(), &Clash::RestfulApi::trafficUpdate, net_speed_label, &NetSpeedLabel::setSpeed);
+
+    connect(clash.api(), &Clash::RestfulApi::connected, this, &MainWindow::onClashStarted);
 }
 
-void MainWindow::onTabChange(int index) {}
+void MainWindow::onLogLevelClicked(QAbstractButton *button) { qDebug() << button->text(); }
+void MainWindow::onModeClicked(QAbstractButton *button) { qDebug() << button->text(); }
+
+void setText(QLineEdit *edit, const QString &text) {
+    if (edit->hasFocus()) {
+        return;
+    }
+    edit->setText(text);
+}
+void MainWindow::onConfigUpdate(const QByteArray &rawJson) {
+    QJsonParseError parseError{};
+    QJsonDocument document = QJsonDocument::fromJson(rawJson, &parseError);
+    if (parseError.error != QJsonParseError::NoError) {
+        qDebug() << "Failed to parse config data" << parseError.errorString() << rawJson;
+        return;
+    }
+    QJsonObject config = document.object();
+
+    setText(ui->mixedPort, QString::number(config["mixed-port"].toInt(0)));
+    setText(ui->httpPort, QString::number(config["port"].toInt(0)));
+    setText(ui->socksPort, QString::number(config["socks-port"].toInt(0)));
+
+    ui->allowLan->setChecked(config["allow-lan"].toBool(false));
+
+    QString mode = config["mode"].toString();
+    if (mode == "global") {
+        ui->global->setChecked(true);
+    } else if (mode == "rule") {
+        ui->rule->setChecked(true);
+    } else if (mode == "direct") {
+        ui->direct->setChecked(true);
+    } else {
+        qDebug() << "Error Mode: " + mode;
+    }
+
+    QString level = config["log-level"].toString();
+    if (level == "debug") {
+        ui->debug->setChecked(true);
+    } else if (level == "info") {
+        ui->info->setChecked(true);
+    } else if (level == "warning") {
+        ui->warning->setChecked(true);
+    } else if (level == "error") {
+        ui->error->setChecked(true);
+    } else {
+        qDebug() << "Error Level: " + level;
+    }
+}
+void MainWindow::updateProxies(const QByteArray &rawjson) {
+    QJsonParseError error{};
+    QJsonDocument document = QJsonDocument::fromJson(rawjson, &error);
+    if (error.error != QJsonParseError::NoError) {
+        qDebug() << "Failed to parse proxy data" << error.errorString();
+        qDebug() << rawjson;
+        return;
+    }
+    QJsonObject obj = document.object();
+    if (!obj.contains("proxies")) {
+        qDebug() << "Error Proxy Data. No proxies found";
+        return;
+    }
+    QJsonObject proxies = obj["proxies"].toObject();
+    QStringList groupList = proxies.keys();
+    if (groups == groupList) {
+        // group not change
+        for (auto groupName : groupList) {
+            auto item = group_items.value(groupName);
+            if (item == nullptr) {
+                continue;
+            }
+            updateGroup(proxies, groupName, item);
+        }
+    } else {
+        // clear data if group changed
+        ui->proxies->clear();
+        group_items.clear();
+        this->groups = groupList;
+        for (const auto &groupName : groups) {
+            auto proxyGroup = proxies[groupName].toObject();
+            QString type = proxyGroup["type"].toString();
+            if (type != "Selector") {
+                continue;
+            }
+            auto *groupWidget = new ProxyGroupWidget(groupName, proxyGroup["now"].toString("NULL"), type, this);
+            auto *item = new QTreeWidgetItem(ui->proxies);
+            group_items[groupName] = item;
+            if (groupName == "Proxy") {
+                ui->proxies->insertTopLevelItem(0, item);
+            } else {
+                ui->proxies->insertTopLevelItem(ui->proxies->topLevelItemCount(), item);
+            }
+            ui->proxies->setItemWidget(item, 0, groupWidget);
+            updateGroup(proxies, groupName, item);
+        }
+    }
+}
+void MainWindow::updateGroup(const QJsonObject &proxies, QString group, QTreeWidgetItem *item) {
+    auto array = proxies[group].toObject()["all"].toArray();
+    QStringList list;
+    for (auto it = array.begin(); it != array.end(); it++) {
+        list.append((*it).toString("Error"));
+    }
+    if (group_proxies.value(group) == list) {
+        // proxies in this group not changed.
+    } else {
+        group_proxies[group] = list;
+        // remove previous data;
+        for (int i = 0; i < item->childCount(); ++i) {
+            auto child = item->child(i);
+            delete ui->proxies->itemWidget(child, 0);
+            item->removeChild(child);
+            delete child;
+        }
+        // add new data
+        for (const auto &proxy_name : list) {
+            auto *widget = new ProxyWidget(group, proxy_name, "type", this);
+            auto *child = new QTreeWidgetItem(item);
+            item->addChild(child);
+            ui->proxies->setItemWidget(child, 0, widget);
+        }
+    }
+    QString selected = proxies[group].toObject()["now"].toString("NAN");
+    static_cast<ProxyGroupWidget *>(ui->proxies->itemWidget(item, 0))->setSelected(selected);
+    for (int i = 0; i < item->childCount(); ++i) {
+        auto child_item = item->child(i);
+        auto proxy_widget = static_cast<ProxyWidget *>(ui->proxies->itemWidget(child_item, 0));
+        child_item->setSelected(proxy_widget->getName() == selected);
+    }
+}
+
+template <>
+struct YAML::convert<Clash::Profile> {
+    static Node encode(const Clash::Profile &rhs) {
+        Node node;
+        node["name"] = rhs.name.toStdString();
+        node["url"] = rhs.url.toStdString();
+        node["file"] = rhs.file.toStdString();
+        node["time"] = rhs.updatedTime.toString(Qt::ISODate).toStdString();
+        node["interval"] = rhs.interval;
+        return node;
+    }
+
+    static bool decode(const Node &node, Clash::Profile &rhs) {
+        if (!node.IsMap()) return false;
+        rhs.name = QString::fromStdString(node["name"].as<std::string>("ERROR"));
+        rhs.url = QString::fromStdString(node["url"].as<std::string>("ERROR"));
+        rhs.file = QString::fromStdString(node["file"].as<std::string>("ERROR"));
+        rhs.updatedTime = QDateTime::fromString(QString::fromStdString(node["time"].as<std::string>("2017-07-24T15:46:29")), Qt::ISODate);
+        rhs.interval = node["interval"].as<int>(-1);
+        return true;
+    }
+};
+
+void MainWindow::loadProfiles() {
+    QString filename = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.config/clash/profile/profiles.yaml";
+    if (!QFile::exists(filename)) {
+        return;
+    }
+    YAML::Node profileConfig = YAML::LoadFile(filename.toStdString());
+    YAML::Node profileListNode = profileConfig["profiles"];
+    if (!profileListNode.IsSequence()) {
+        qDebug() << "Profile Config Error";
+    } else {
+        for (YAML::Node node : profileListNode) {
+            profile_list.append(node.as<Clash::Profile>(Clash::Profile()));
+        }
+    }
+    for (const auto &profile : profile_list) {
+        ui->profile->addItem(profile.name);
+    }
+    int index = profileConfig["selected"].as<int>(0);
+    ui->profile->setCurrentIndex(index);
+}
+void MainWindow::onProfileChanged(int index) { clash.api()->updateProfile(profile_list.at(index).file); }
+void MainWindow::onClashStarted() {
+    clash.api()->listenTraffic();
+    clash.api()->autoUpdateProxy();
+    clash.api()->autoUpdateConfig();
+
+    // switch profile
+    onProfileChanged(ui->profile->currentIndex());
+}

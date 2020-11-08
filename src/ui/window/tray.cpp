@@ -9,8 +9,10 @@
 #include <QDebug>
 #include <QMenu>
 
+#include "clash/clash.h"
 #include "mainwindow.h"
 #include "util/instance.h"
+
 Tray::Tray(QObject *parent) : QSystemTrayIcon(parent) {
     setIcon(QIcon(":/icon/clash"));
     setToolTip(QApplication::applicationName());

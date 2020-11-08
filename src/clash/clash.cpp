@@ -21,14 +21,7 @@ Clash::Clash(QString program, QString clash_dir, QObject *parent) : QObject(pare
     this->clash_dir = std::move(clash_dir);
     process->setStandardOutputFile("./log.txt");
 
-    connect(restfulApi, &RestfulApi::connected, this, [this] {
-        qDebug() << "Start Listing";
-        restfulApi->listenTraffic();
-        restfulApi->listenLog();
-        restfulApi->autoUpdateConfig(true, 2000);
-        restfulApi->autoUpdateProxy(true, 1000);
-        restfulApi->autoUpdateConnection(true, 2000);
-    });
+    connect(qApp, &QApplication::aboutToQuit, this, [this] { process->terminate(); });
 }
 void Clash::start() {
     qDebug() << "Starting Clash Process";
@@ -178,7 +171,7 @@ void Clash::RestfulApi::updateConnection() {
     request.setUrl(CONNECTION_URL);
     auto reply = manager->get(request);
     connect(reply, &QNetworkReply::finished, this, [this, reply] {
-        emit configUpdate(reply->readAll());
+        emit connectionDataReceived(reply->readAll());
         reply->deleteLater();
     });
 }
