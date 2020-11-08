@@ -284,3 +284,19 @@ void Clash::RestfulApi::updateProfile(QString filename) {
         }
     });
 }
+void Clash::RestfulApi::patchConfig(QString key, QVariant value) {
+    QNetworkRequest request;
+    request.setRawHeader("Content-Type", "application/json");
+    request.setUrl(CONFIG_URL);
+    QJsonObject obj;
+    obj[key] = value.toJsonValue();
+
+    auto reply = manager->sendCustomRequest(request, "PATCH", QJsonDocument(obj).toJson(QJsonDocument::Compact));
+    connect(reply, &QNetworkReply::finished, this, [reply, this] {
+        if (reply->error() != QNetworkReply::NoError) {
+            qDebug() << reply->readAll();
+            return;
+        }
+        updateConfig();
+    });
+}

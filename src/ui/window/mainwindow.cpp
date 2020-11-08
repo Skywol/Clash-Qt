@@ -26,6 +26,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->httpPort->setValidator(portValidator);
     ui->socksPort->setValidator(portValidator);
 
+    connect(ui->mixedPortSend, &QPushButton::released, this, &MainWindow::sendMixedPort);
+    connect(ui->mixedPort, &QLineEdit::returnPressed, this, &MainWindow::sendMixedPort);
+    connect(ui->httpPortSend, &QPushButton::released, this, &MainWindow::sendHttpPort);
+    connect(ui->httpPort, &QLineEdit::returnPressed, this, &MainWindow::sendHttpPort);
+    connect(ui->socksPortSend, &QPushButton::released, this, &MainWindow::sendSocksPort);
+    connect(ui->socksPort, &QLineEdit::returnPressed, this, &MainWindow::sendSocksPort);
+
     log_level_group = new QButtonGroup(this);
     log_level_group->setExclusive(true);
     log_level_group->addButton(ui->debug);
@@ -39,7 +46,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     model_group->addButton(ui->rule);
     model_group->addButton(ui->direct);
     connect(model_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), this, &MainWindow::onModeClicked);
-
     connect(clash.api(), &Clash::RestfulApi::configUpdate, this, &MainWindow::onConfigUpdate);
 
     loadProfiles();
@@ -50,11 +56,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     statusBar()->addPermanentWidget(net_speed_label);
     connect(clash.api(), &Clash::RestfulApi::trafficUpdate, net_speed_label, &NetSpeedLabel::setSpeed);
 
+    connect(ui->allowLan, &QCheckBox::clicked, this, &MainWindow::allowLan);
+
     connect(clash.api(), &Clash::RestfulApi::connected, this, &MainWindow::onClashStarted);
 }
 
-void MainWindow::onLogLevelClicked(QAbstractButton *button) { qDebug() << button->text(); }
-void MainWindow::onModeClicked(QAbstractButton *button) { qDebug() << button->text(); }
+void MainWindow::onLogLevelClicked(QAbstractButton *button) { clash.api()->patchConfig("log-level", button->objectName()); }
+void MainWindow::onModeClicked(QAbstractButton *button) { clash.api()->patchConfig("mode", button->objectName()); }
 
 void setText(QLineEdit *edit, const QString &text) {
     if (edit->hasFocus()) {
@@ -235,3 +243,14 @@ void MainWindow::onClashStarted() {
     // switch profile
     onProfileChanged(ui->profile->currentIndex());
 }
+
+int getPort(QLineEdit *edit) {
+    int port = edit->text().toInt();
+    edit->clearFocus();
+    return port;
+}
+
+void MainWindow::sendMixedPort() { clash.api()->patchConfig("mixed-port", getPort(ui->mixedPort)); }
+void MainWindow::sendHttpPort() { clash.api()->patchConfig("port", getPort(ui->httpPort)); }
+void MainWindow::sendSocksPort() { clash.api()->patchConfig("socks-port", getPort(ui->socksPort)); }
+void MainWindow::allowLan(bool checked) { clash.api()->patchConfig("allow-lan", checked); }

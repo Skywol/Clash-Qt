@@ -32,6 +32,12 @@ public:
 
     void onClashStarted();
 
+    void sendMixedPort();
+    void sendHttpPort();
+    void sendSocksPort();
+
+    void allowLan(bool checked);
+
 private:
     Ui::MainWindow *ui;
     Clash &clash;

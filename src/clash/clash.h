@@ -64,6 +64,7 @@ public:
     void autoUpdateConfig(bool enable = true, int interval_ms = 1000);
 
     void updateProfile(QString filename);
+    void patchConfig(QString key, QVariant value);
 
 signals:
     void connected();
