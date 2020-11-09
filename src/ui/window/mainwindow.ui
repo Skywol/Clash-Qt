@@ -162,7 +162,7 @@
                                         </widget>
                                     </item>
                                     <item>
-                                        <widget class="QToolButton" name="profileEdit">
+                                        <widget class="QPushButton" name="profileEdit">
                                             <property name="text">
                                                 <string/>
                                             </property>
@@ -214,7 +214,9 @@
                                                 <string/>
                                             </property>
                                             <property name="icon">
-                                                <iconset theme="document-send"/>
+                                                <iconset theme="document-send">
+                                                    <normaloff>.</normaloff>.
+                                                </iconset>
                                             </property>
                                             <property name="flat">
                                                 <bool>false</bool>
@@ -238,7 +240,9 @@
                                                 <string/>
                                             </property>
                                             <property name="icon">
-                                                <iconset theme="document-send"/>
+                                                <iconset theme="document-send">
+                                                    <normaloff>.</normaloff>.
+                                                </iconset>
                                             </property>
                                         </widget>
                                     </item>
@@ -259,7 +263,9 @@
                                                 <string/>
                                             </property>
                                             <property name="icon">
-                                                <iconset theme="document-send"/>
+                                                <iconset theme="document-send">
+                                                    <normaloff>.</normaloff>.
+                                                </iconset>
                                             </property>
                                         </widget>
                                     </item>

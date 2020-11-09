@@ -29,7 +29,7 @@ namespace YAML {
 // QString
 template <>
 struct convert<QString> {
-    static Node encode(const QString& rhs) { return Node(rhs.toStdString()); }
+    static Node encode(const QString& rhs) { return Node(rhs.toUtf8().constData()); }
 
     static bool decode(const Node& node, QString& rhs) {
         if (!node.IsScalar()) return false;

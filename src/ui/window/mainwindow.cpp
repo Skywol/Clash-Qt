@@ -4,6 +4,7 @@
 
 #include <QButtonGroup>
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -15,8 +16,10 @@
 #include "ui/widget/netspeedlabel.h"
 #include "ui/widget/proxygroupwidget.h"
 #include "ui/widget/proxywidget.h"
+#include "ui/window/profilemanager.h"
 #include "ui_mainwindow.h"
 #include "util/instance.h"
+#include "util/qtyaml.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), clash(getInstance<Clash>()) {
     ui->setupUi(this);
@@ -58,7 +61,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     connect(ui->allowLan, &QCheckBox::clicked, this, &MainWindow::allowLan);
 
+    connect(ui->profileEdit, &QPushButton::clicked, this, &MainWindow::manageProfile);
+
     connect(clash.api(), &Clash::RestfulApi::connected, this, &MainWindow::onClashStarted);
+    connect(qApp, &QApplication::aboutToQuit, this, [this] { this->saveProfiles(); });
 }
 
 void MainWindow::onLogLevelClicked(QAbstractButton *button) { clash.api()->patchConfig("log-level", button->objectName()); }
@@ -109,6 +115,8 @@ void MainWindow::onConfigUpdate(const QByteArray &rawJson) {
         qDebug() << "Error Level: " + level;
     }
 }
+
+
 void MainWindow::updateProxies(const QByteArray &rawjson) {
     QJsonParseError error{};
     QJsonDocument document = QJsonDocument::fromJson(rawjson, &error);
@@ -126,6 +134,7 @@ void MainWindow::updateProxies(const QByteArray &rawjson) {
     QStringList groupList = proxies.keys();
     if (groups == groupList) {
         // group not change
+        int i = 0;
         for (auto groupName : groupList) {
             auto item = group_items.value(groupName);
             if (item == nullptr) {
@@ -138,6 +147,7 @@ void MainWindow::updateProxies(const QByteArray &rawjson) {
         ui->proxies->clear();
         group_items.clear();
         this->groups = groupList;
+        int i = 0;
         for (const auto &groupName : groups) {
             auto proxyGroup = proxies[groupName].toObject();
             QString type = proxyGroup["type"].toString();
@@ -146,6 +156,7 @@ void MainWindow::updateProxies(const QByteArray &rawjson) {
             }
             auto *groupWidget = new ProxyGroupWidget(groupName, proxyGroup["now"].toString("NULL"), type, this);
             auto *item = new QTreeWidgetItem(ui->proxies);
+            item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
             group_items[groupName] = item;
             if (groupName == "Proxy") {
                 ui->proxies->insertTopLevelItem(0, item);
@@ -157,6 +168,7 @@ void MainWindow::updateProxies(const QByteArray &rawjson) {
         }
     }
 }
+
 void MainWindow::updateGroup(const QJsonObject &proxies, QString group, QTreeWidgetItem *item) {
     auto array = proxies[group].toObject()["all"].toArray();
     QStringList list;
@@ -189,6 +201,7 @@ void MainWindow::updateGroup(const QJsonObject &proxies, QString group, QTreeWid
         auto proxy_widget = static_cast<ProxyWidget *>(ui->proxies->itemWidget(child_item, 0));
         child_item->setSelected(proxy_widget->getName() == selected);
     }
+    profile_list[current_profile_index].selected[group] = selected;
 }
 
 template <>
@@ -200,6 +213,7 @@ struct YAML::convert<Clash::Profile> {
         node["file"] = rhs.file.toStdString();
         node["time"] = rhs.updatedTime.toString(Qt::ISODate).toStdString();
         node["interval"] = rhs.interval;
+        node["selected"] = rhs.selected;
         return node;
     }
 
@@ -210,6 +224,7 @@ struct YAML::convert<Clash::Profile> {
         rhs.file = QString::fromStdString(node["file"].as<std::string>("ERROR"));
         rhs.updatedTime = QDateTime::fromString(QString::fromStdString(node["time"].as<std::string>("2017-07-24T15:46:29")), Qt::ISODate);
         rhs.interval = node["interval"].as<int>(-1);
+        rhs.selected = node["selected"].as<QMap<QString, QString>>();
         return true;
     }
 };
@@ -234,7 +249,32 @@ void MainWindow::loadProfiles() {
     int index = profileConfig["selected"].as<int>(0);
     ui->profile->setCurrentIndex(index);
 }
-void MainWindow::onProfileChanged(int index) { clash.api()->updateProfile(profile_list.at(index).file); }
+void MainWindow::saveProfiles() {
+    YAML::Node profiles;
+    for (auto profile : profile_list) {
+        profiles.push_back(profile);
+    }
+    YAML::Node node;
+    node["profiles"] = profiles;
+    node["selected"] = current_profile_index;
+
+    YAML::Emitter out;
+    out << node;
+    QDir dir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.config/clash/profile");
+    if (!dir.exists()) {
+        dir.mkpath(dir.absolutePath());
+    }
+    QFile file(QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.config/clash/profile/profiles.yaml");
+    file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+    QTextStream textStream(&file);
+    textStream << QString(out.c_str());  // do not write out.c_str() directly which will lead to mojibake;
+    textStream.flush();
+    file.close();
+}
+void MainWindow::onProfileChanged(int index) {
+    current_profile_index = index;
+    clash.api()->updateProfile(profile_list.at(index));
+}
 void MainWindow::onClashStarted() {
     clash.api()->listenTraffic();
     clash.api()->autoUpdateProxy();
@@ -249,8 +289,12 @@ int getPort(QLineEdit *edit) {
     edit->clearFocus();
     return port;
 }
-
 void MainWindow::sendMixedPort() { clash.api()->patchConfig("mixed-port", getPort(ui->mixedPort)); }
 void MainWindow::sendHttpPort() { clash.api()->patchConfig("port", getPort(ui->httpPort)); }
 void MainWindow::sendSocksPort() { clash.api()->patchConfig("socks-port", getPort(ui->socksPort)); }
 void MainWindow::allowLan(bool checked) { clash.api()->patchConfig("allow-lan", checked); }
+
+void MainWindow::manageProfile() {
+    ProfileManager manager(profile_list, this);
+    manager.exec();
+}

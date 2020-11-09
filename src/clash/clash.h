@@ -24,6 +24,7 @@ public:
         QString file;
         QDateTime updatedTime;
         int interval;
+        QMap<QString, QString> selected;
     };
     class RestfulApi;
 
@@ -63,7 +64,7 @@ public:
     void autoUpdateConnection(bool enable = true, int interval_ms = 1000);
     void autoUpdateConfig(bool enable = true, int interval_ms = 1000);
 
-    void updateProfile(QString filename);
+    void updateProfile(const Profile &profile);
     void patchConfig(QString key, QVariant value);
 
 signals:

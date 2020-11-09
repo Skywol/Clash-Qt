@@ -28,6 +28,7 @@ public:
     void updateGroup(const QJsonObject &proxies, QString group, QTreeWidgetItem *item);
 
     void loadProfiles();
+    void saveProfiles();
     void onProfileChanged(int index);
 
     void onClashStarted();
@@ -37,6 +38,8 @@ public:
     void sendSocksPort();
 
     void allowLan(bool checked);
+
+    void manageProfile();
 
 private:
     Ui::MainWindow *ui;
@@ -49,6 +52,7 @@ private:
     QMap<QString, QStringList> group_proxies;
 
     QList<Clash::Profile> profile_list;
+    int current_profile_index;
 
     NetSpeedLabel *net_speed_label;
 };

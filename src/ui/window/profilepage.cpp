@@ -177,7 +177,6 @@ public:
         if (selected < 0 || selected >= profileList.count()) {
             return;
         }
-        getInstance<Clash>().api()->updateProfile(profileList.at(selected).file);
     }
 
 private:

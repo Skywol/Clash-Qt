@@ -251,15 +251,15 @@ void Clash::RestfulApi::autoUpdateProxy(bool enable, int interval_ms) { enableTi
 void Clash::RestfulApi::autoUpdateConnection(bool enable, int interval_ms) { enableTimer(connectionTimer, enable, interval_ms); }
 
 void Clash::RestfulApi::autoUpdateConfig(bool enable, int interval_ms) { enableTimer(configTimer, enable, interval_ms); }
-void Clash::RestfulApi::updateProfile(QString filename) {
-    QString fullPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.config/clash/profile/" + filename;
+void Clash::RestfulApi::updateProfile(const Profile &profile) {
+    QString fullPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.config/clash/profile/" + profile.file;
     QFile file(fullPath);
     if (!file.exists()) {
-        qDebug() << "Profile " + filename + "not exist.";
+        qDebug() << "Profile " + profile.file + "not exist.";
         return;
     }
     if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "Failed to open " + filename;
+        qDebug() << "Failed to open " + profile.file;
         return;
     }
     QString payload = file.readAll();
@@ -271,7 +271,7 @@ void Clash::RestfulApi::updateProfile(QString filename) {
     obj["payload"] = payload;
 
     auto reply = manager->put(request, QJsonDocument(obj).toJson(QJsonDocument::Compact));
-    connect(reply, &QNetworkReply::finished, this, [reply, this] {
+    connect(reply, &QNetworkReply::finished, this, [reply, this, &profile] {
         if (reply->error() != QNetworkReply::NoError) {
             QJsonParseError error{};
             QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &error);
@@ -280,6 +280,9 @@ void Clash::RestfulApi::updateProfile(QString filename) {
             }
         } else {
             emit successChangeProfile();
+            for (auto it = profile.selected.constBegin(); it != profile.selected.constEnd(); ++it) {
+                updateProxySelector(it.key(), it.value());
+            }
             updateProxy();
         }
     });
