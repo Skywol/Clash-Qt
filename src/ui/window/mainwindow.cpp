@@ -132,6 +132,9 @@ void MainWindow::updateProxies(const QByteArray &rawjson) {
     }
     QJsonObject proxies = obj["proxies"].toObject();
     QStringList groupList = proxies.keys();
+    if (profile_list.getIndex() >= 0 && profile_list.getCurrentProfile().selected.size() != groupList.size()) {
+        profile_list.getCurrentProfile().selected.clear();
+    }
     if (groups == groupList) {
         // group not change
         int i = 0;
