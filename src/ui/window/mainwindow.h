@@ -14,6 +14,7 @@ class QButtonGroup;
 class QAbstractButton;
 class NetSpeedLabel;
 
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
@@ -26,9 +27,11 @@ public:
 
     void updateProxies(const QByteArray &rawjson);
     void updateGroup(const QJsonObject &proxies, QString group, QTreeWidgetItem *item);
+    void updateSelector(QString group, QString proxy);
 
     void loadProfiles();
     void saveProfiles();
+    void useProfiles();
     void onProfileChanged(int index);
 
     void onClashStarted();
@@ -51,8 +54,7 @@ private:
     QMap<QString, QTreeWidgetItem *> group_items;
     QMap<QString, QStringList> group_proxies;
 
-    QList<Clash::Profile> profile_list;
-    int current_profile_index;
+    Clash::ProfileList profile_list;
 
     NetSpeedLabel *net_speed_label;
 };

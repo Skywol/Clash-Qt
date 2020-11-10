@@ -1,9 +1,12 @@
 #ifndef CLASH_QT_CLASH_H
 #define CLASH_QT_CLASH_H
 
+#include <QDateTime>
+#include <QDebug>
+#include <QFile>
+#include <QMap>
 #include <QObject>
-#include <QtCore/QDateTime>
-#include <QtCore/QMap>
+#include <QStandardPaths>
 
 #include "yaml-cpp/yaml.h"
 
@@ -26,6 +29,36 @@ public:
         int interval;
         QMap<QString, QString> selected;
     };
+
+
+    class ProfileList {
+    public:
+        QList<Clash::Profile> &getList() { return list; }
+        const Clash::Profile &getConstCurrentProfile() const { return list.at(index); }
+        int getIndex() const { return index; }
+        Clash::Profile &getCurrentProfile() { return list[index]; }
+        void setIndex(int new_index) {
+            if (list.isEmpty() || new_index < 0 || new_index >= list.size()) {
+                index = -1;
+            } else {
+                index = new_index;
+            }
+        }
+        void remove(int index) {
+            Profile profile = list.takeAt(index);
+            QFile file(QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.config/clash/profile/" + profile.file);
+            if (file.exists()) {
+                file.remove();
+            } else {
+                qDebug() << "Failed to delete" << profile.file << "File not exist";
+            }
+        }
+
+    private:
+        QList<Clash::Profile> list;
+        int index;
+    };
+
     class RestfulApi;
 
 public:

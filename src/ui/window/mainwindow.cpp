@@ -201,7 +201,9 @@ void MainWindow::updateGroup(const QJsonObject &proxies, QString group, QTreeWid
         auto proxy_widget = static_cast<ProxyWidget *>(ui->proxies->itemWidget(child_item, 0));
         child_item->setSelected(proxy_widget->getName() == selected);
     }
-    profile_list[current_profile_index].selected[group] = selected;
+    if (profile_list.getIndex() >= 0) {
+        profile_list.getCurrentProfile().selected[group] = selected;
+    }
 }
 
 template <>
@@ -229,6 +231,14 @@ struct YAML::convert<Clash::Profile> {
     }
 };
 
+void MainWindow::useProfiles() {
+    ui->profile->clear();
+    for (auto profile : profile_list.getList()) {
+        ui->profile->addItem(profile.name);
+    }
+    qDebug() << profile_list.getIndex();
+    ui->profile->setCurrentIndex(profile_list.getIndex());
+}
 void MainWindow::loadProfiles() {
     QString filename = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.config/clash/profile/profiles.yaml";
     if (!QFile::exists(filename)) {
@@ -240,23 +250,23 @@ void MainWindow::loadProfiles() {
         qDebug() << "Profile Config Error";
     } else {
         for (YAML::Node node : profileListNode) {
-            profile_list.append(node.as<Clash::Profile>(Clash::Profile()));
+            profile_list.getList().append(node.as<Clash::Profile>(Clash::Profile()));
         }
     }
-    for (const auto &profile : profile_list) {
-        ui->profile->addItem(profile.name);
+    if (profile_list.getList().isEmpty()) {
+        qDebug() << "No profile";
+        return;
     }
-    int index = profileConfig["selected"].as<int>(0);
-    ui->profile->setCurrentIndex(index);
+    useProfiles();
 }
 void MainWindow::saveProfiles() {
     YAML::Node profiles;
-    for (auto profile : profile_list) {
+    for (auto profile : profile_list.getList()) {
         profiles.push_back(profile);
     }
     YAML::Node node;
     node["profiles"] = profiles;
-    node["selected"] = current_profile_index;
+    node["selected"] = profile_list.getIndex();
 
     YAML::Emitter out;
     out << node;
@@ -272,14 +282,16 @@ void MainWindow::saveProfiles() {
     file.close();
 }
 void MainWindow::onProfileChanged(int index) {
-    current_profile_index = index;
-    clash.api()->updateProfile(profile_list.at(index));
+    profile_list.setIndex(index);
+    if (profile_list.getIndex() >= 0) {
+        clash.api()->updateProfile(profile_list.getConstCurrentProfile());
+    }
 }
 void MainWindow::onClashStarted() {
     clash.api()->listenTraffic();
     clash.api()->autoUpdateProxy();
     clash.api()->autoUpdateConfig();
-
+    qDebug() << ui->profile->currentIndex();
     // switch profile
     onProfileChanged(ui->profile->currentIndex());
 }
@@ -297,4 +309,5 @@ void MainWindow::allowLan(bool checked) { clash.api()->patchConfig("allow-lan", 
 void MainWindow::manageProfile() {
     ProfileManager manager(profile_list, this);
     manager.exec();
+    useProfiles();
 }

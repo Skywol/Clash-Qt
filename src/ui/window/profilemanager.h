@@ -9,15 +9,22 @@ namespace Ui {
 class ProfileManager;
 }
 
+class ProfileTableModel;
+
 class ProfileManager : public QDialog {
     Q_OBJECT
 
 public:
-    explicit ProfileManager(QList<Clash::Profile> &profiles, QWidget *parent = nullptr);
-    ~ProfileManager();
+    explicit ProfileManager(Clash::ProfileList &profiles, QWidget *parent = nullptr);
+
+    void downloadProfile();
+    void downloadFinished(QNetworkReply *reply);
 
 private:
     Ui::ProfileManager *ui;
+    Clash::ProfileList &profiles;
+    ProfileTableModel *model;
+    QNetworkAccessManager *manager;
 };
 
 #endif  // PROFILEMANAGER_H

@@ -21,7 +21,7 @@ Clash::Clash(QString program, QString clash_dir, QObject *parent) : QObject(pare
     this->clash_dir = std::move(clash_dir);
     process->setStandardOutputFile("./log.txt");
 
-    connect(qApp, &QApplication::aboutToQuit, this, [this] { process->terminate(); });
+    connect(qApp, &QApplication::aboutToQuit, process, &QProcess::terminate);
 }
 void Clash::start() {
     qDebug() << "Starting Clash Process";
@@ -132,11 +132,11 @@ void Clash::RestfulApi::updateProxySelector(QString group, QString name, bool up
     request.setUrl(QUrl(PROXY_URL + "/" + group.toUtf8()));
     QJsonObject data;
     data["name"] = name;
-    qDebug() << request.url() << QJsonDocument(data);
     auto reply = manager->put(request, QJsonDocument(data).toJson(QJsonDocument::JsonFormat::Compact));
-    connect(reply, &QNetworkReply::finished, this, [this, reply, update] {
-        qDebug() << reply->readAll();
-        if (update) {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, update, group, name] {
+        if (reply->error() != QNetworkReply::NoError) {
+            qDebug() << "Failed to change proxy selector: " << group << name << reply->readAll();
+        } else if (update) {
             updateProxy();
         }
         reply->deleteLater();
