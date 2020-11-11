@@ -5,7 +5,6 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonParseError>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -19,19 +18,28 @@ Clash::Clash(QString program, QString clash_dir, QObject *parent) : QObject(pare
     restfulApi = new RestfulApi(this);
     this->clash_program = std::move(program);
     this->clash_dir = std::move(clash_dir);
-    process->setStandardOutputFile("/tmp/clash-qt/clash_output.txt");
+    process->setStandardOutputFile("/tmp/clash_output.txt");
+
+    if (clash_program.isEmpty()) {
+        clash_program = QCoreApplication::applicationDirPath() + "/clash";
+    }
 
     connect(qApp, &QApplication::aboutToQuit, process, &QProcess::terminate);
 }
 void Clash::start() {
-    qDebug() << "Starting Clash Process";
+    qDebug() << "Starting Clash Process:" + clash_program;
     if (!checkFiles()) {
         qDebug() << "Failed to check files";
         return;
     }
-
+    auto parm = clash_dir.isEmpty() ? QStringList() : QStringList() << "-d" << clash_dir;
+    qDebug() << parm;
     process->start(clash_program, clash_dir.isEmpty() ? QStringList() : QStringList() << "-d" << clash_dir);
-    QTimer::singleShot(200, this, [this] { restfulApi->testConnection(); });
+    process->waitForStarted(1000);
+    QTimer::singleShot(200, this, [this] {
+        restfulApi->testConnection();
+        qDebug() << process->processId();
+    });
 }
 void Clash::stop() {}
 void Clash::switchProfile(QString name) {}

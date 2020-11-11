@@ -62,7 +62,7 @@ public:
     class RestfulApi;
 
 public:
-    explicit Clash(QString program = "./clash", QString clash_dir = "", QObject *parent = nullptr);
+    explicit Clash(QString program = "", QString clash_dir = "", QObject *parent = nullptr);
     void start();
     void stop();
     bool checkFiles();
