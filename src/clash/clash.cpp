@@ -19,7 +19,7 @@ Clash::Clash(QString program, QString clash_dir, QObject *parent) : QObject(pare
     restfulApi = new RestfulApi(this);
     this->clash_program = std::move(program);
     this->clash_dir = std::move(clash_dir);
-    process->setStandardOutputFile("./log.txt");
+    process->setStandardOutputFile("/tmp/clash-qt/clash_output.txt");
 
     connect(qApp, &QApplication::aboutToQuit, process, &QProcess::terminate);
 }
