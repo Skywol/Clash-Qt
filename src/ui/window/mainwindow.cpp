@@ -260,6 +260,7 @@ void MainWindow::loadProfiles() {
         qDebug() << "No profile";
         return;
     }
+    profile_list.setIndex(profileConfig["selected"].as<int>(-1));
     useProfiles();
 }
 void MainWindow::saveProfiles() {
