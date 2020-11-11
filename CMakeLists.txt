@@ -20,6 +20,7 @@ find_package(yaml-cpp CONFIG REQUIRED)
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
 file(COPY default/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/default/)
+file(COPY res/clash DESTINATION &{CMAKE_CURRENT_BINARY_DIR/clash)
 
 include_directories(src)
 
