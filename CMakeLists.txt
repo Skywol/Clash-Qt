@@ -34,3 +34,7 @@ target_link_libraries(clash-qt
         Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network
         yaml-cpp
         )
+
+install(TARGETS clash-qt DESTINATION clash-qt/)
+install(PROGRAMS res/clash DESTINATION clash-qt/)
+install(DIRECTORY default DESTINATION clash-qt/default)
