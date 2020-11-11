@@ -1,4 +1,4 @@
-#include "profilemanager.h"
+#include "profiledialog.h"
 
 #include <QAbstractTableModel>
 #include <QMessageBox>
@@ -8,7 +8,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QUrl>
 
-#include "ui_profilemanager.h"
+#include "ui_profiledialog.h"
 
 class ProfileTableModel : public QAbstractTableModel {
 public:
@@ -74,8 +74,8 @@ private:
     Clash::ProfileList &profile_list;
 };
 
-ProfileManager::ProfileManager(Clash::ProfileList &profiles, QWidget *parent)
-    : QDialog(parent), ui(new Ui::ProfileManager), profiles(profiles) {
+ProfileDialog::ProfileDialog(Clash::ProfileList &profiles, QWidget *parent)
+    : QDialog(parent), ui(new Ui::ProfileDialog), profiles(profiles) {
     ui->setupUi(this);
 
     model = new ProfileTableModel(profiles, this);
@@ -83,10 +83,10 @@ ProfileManager::ProfileManager(Clash::ProfileList &profiles, QWidget *parent)
     ui->profileTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     manager = new QNetworkAccessManager(this);
-    connect(manager, &QNetworkAccessManager::finished, this, &ProfileManager::downloadFinished);
-    connect(ui->download, &QPushButton::released, this, &ProfileManager::downloadProfile);
+    connect(manager, &QNetworkAccessManager::finished, this, &ProfileDialog::downloadFinished);
+    connect(ui->download, &QPushButton::released, this, &ProfileDialog::downloadProfile);
 }
-void ProfileManager::downloadProfile() {
+void ProfileDialog::downloadProfile() {
     QUrl url(ui->url->text());
     if (!url.isValid()) {
         QMessageBox::critical(this, tr("Invalid Url"), url.errorString());
@@ -94,7 +94,7 @@ void ProfileManager::downloadProfile() {
     manager->get(QNetworkRequest(url));
 }
 
-void ProfileManager::downloadFinished(QNetworkReply *reply) {
+void ProfileDialog::downloadFinished(QNetworkReply *reply) {
     qDebug() << "Download finish";
     if (reply->error() != QNetworkReply::NoError) {
         QMessageBox::critical(this, tr("Download Profile Failed"), reply->errorString());
@@ -120,4 +120,9 @@ void ProfileManager::downloadFinished(QNetworkReply *reply) {
         model->addProfile(profile);
     }
     file.close();
+}
+ProfileDialog::~ProfileDialog() {
+    delete ui;
+    delete manager;
+    delete model;
 }

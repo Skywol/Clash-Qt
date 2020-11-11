@@ -6,22 +6,23 @@
 #include "clash/clash.h"
 
 namespace Ui {
-class ProfileManager;
+class ProfileDialog;
 }
 
 class ProfileTableModel;
 
-class ProfileManager : public QDialog {
+class ProfileDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit ProfileManager(Clash::ProfileList &profiles, QWidget *parent = nullptr);
+    explicit ProfileDialog(Clash::ProfileList &profiles, QWidget *parent = nullptr);
+    ~ProfileDialog() override;
 
     void downloadProfile();
     void downloadFinished(QNetworkReply *reply);
 
 private:
-    Ui::ProfileManager *ui;
+    Ui::ProfileDialog *ui;
     Clash::ProfileList &profiles;
     ProfileTableModel *model;
     QNetworkAccessManager *manager;

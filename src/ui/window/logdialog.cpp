@@ -1,17 +1,10 @@
-//
-// Created by cyril on 2020/10/20.
-//
+#include "logdialog.h"
 
-#include "logpage.h"
-
-#include <QAbstractTableModel>
-#include <QHBoxLayout>
-#include <QHeaderView>
 #include <QScrollBar>
 #include <QTime>
-#include <QVBoxLayout>
 
 #include "clash/clash.h"
+#include "ui_logdialog.h"
 #include "util/instance.h"
 
 class LogTableModel : public QAbstractTableModel {
@@ -87,35 +80,30 @@ private:
     QList<Log> logs;
 };
 
-LogPage::LogPage(QWidget *parent) : QWidget(parent) {
-    QVBoxLayout *layout = new QVBoxLayout;
-    setLayout(layout);
-
-    QHBoxLayout *headerLayout = new QHBoxLayout;
-    clearBtn = new QPushButton(tr("Clear"));
-    stopBtn = new QPushButton(tr("Stop"));
-    headerLayout->addStretch();
-    headerLayout->addWidget(clearBtn);
-    headerLayout->addWidget(stopBtn);
-
-    layout->addLayout(headerLayout);
-
-    table = new QTableView;
+LogDialog::LogDialog(QWidget *parent) : QDialog(parent), ui(new Ui::LogDialog) {
+    ui->setupUi(this);
+    setAttribute(Qt::WA_DeleteOnClose);
     model = new LogTableModel;
+    ui->logTabel->setModel(model);
+    ui->logTabel->verticalHeader()->hide();
+    ui->logTabel->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-    table->setModel(model);
-    table->verticalHeader()->hide();
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    connect(ui->clear, &QPushButton::released, model, &LogTableModel::clear);
 
-    layout->addWidget(table);
+    connect(getInstance<Clash>().api(), &Clash::RestfulApi::logReceived, this, &LogDialog::addLog);
+    getInstance<Clash>().api()->listenLog();
+}
 
-    connect(getInstance<Clash>().api(), &Clash::RestfulApi::logReceived, this, [this](QString type, QString payload) {
-        auto bar = table->verticalScrollBar();
-        bool toBottom = bar->value() == bar->maximum();
-        model->addLog(type, payload);
-        if (toBottom) {
-            table->scrollToBottom();
-        }
-    });
+LogDialog::~LogDialog() {
+    delete ui;
+    delete model;
+    getInstance<Clash>().api()->stopListenLog();
+}
+void LogDialog::addLog(QString type, QString content) {
+    auto bar = ui->logTabel->verticalScrollBar();
+    bool toBottom = bar->value() == bar->maximum();
+    model->addLog(type, content);
+    if (toBottom) {
+        ui->logTabel->scrollToBottom();
+    }
 }

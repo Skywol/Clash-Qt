@@ -21,30 +21,33 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget *parent = nullptr);
 
-    void onLogLevelClicked(QAbstractButton *button);
-    void onModeClicked(QAbstractButton *button);
-    void onConfigUpdate(const QByteArray &rawJson);
-
-    void updateProxies(const QByteArray &rawjson);
-    void updateGroup(const QJsonObject &proxies, QString group, QTreeWidgetItem *item);
-    void updateSelector(QString group, QString proxy);
 
     void loadProfiles();
     void saveProfiles();
     void useProfiles();
+
+
+public slots:
+    void onClashStarted();
+    void updateProxies(const QByteArray &rawjson);
     void onProfileChanged(int index);
 
-    void onClashStarted();
+    void openClashFolder();
+    void showProfileDialog();
+    void showLogDialog();
+    void showConnectionDialog();
 
+    void onLogLevelClicked(QAbstractButton *button);
+    void onModeClicked(QAbstractButton *button);
+    void onConfigUpdate(const QByteArray &rawJson);
     void sendMixedPort();
     void sendHttpPort();
     void sendSocksPort();
-
-    void allowLan(bool checked);
-
-    void manageProfile();
+    void setAllowLan(bool checked);
 
 private:
+    void updateGroup(const QJsonObject &proxies, QString group, QTreeWidgetItem *item);
+
     Ui::MainWindow *ui;
     Clash &clash;
 
@@ -55,7 +58,6 @@ private:
     QMap<QString, QStringList> group_proxies;
 
     Clash::ProfileList profile_list;
-
     NetSpeedLabel *net_speed_label;
 };
 

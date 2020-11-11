@@ -1,12 +1,12 @@
-#include "connectionpage.h"
+#include "connectiondialog.h"
 
-#include <QHBoxLayout>
-#include <QHeaderView>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTimer>
 
 #include "clash/clash.h"
+#include "ui_connectiondialog.h"
 #include "util/instance.h"
 
 class ConnectionModel : public QAbstractTableModel {
@@ -92,38 +92,43 @@ private:
     const static QStringList header;
 };
 
-ConnectionPage::ConnectionPage(QWidget *parent) : QWidget(parent) {
-    auto layout = new QVBoxLayout;
-    this->setLayout(layout);
+ConnectionDialog::ConnectionDialog(QWidget *parent) : QDialog(parent), ui(new Ui::ConnectionDialog) {
+    ui->setupUi(this);
 
     model = new ConnectionModel;
-    table = new QTableView;
-    table->verticalHeader()->hide();
-    table->setModel(model);
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    table->setSelectionBehavior(QAbstractItemView::SelectRows);
-    layout->addWidget(table);
+    ui->connectionTabel->setModel(model);
+    ui->connectionTabel->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-    connect(getInstance<Clash>().api(), &Clash::RestfulApi::connectionDataReceived, this, [this](QByteArray json) {
-        QJsonParseError error;
-        QJsonDocument document = QJsonDocument::fromJson(json, &error);
-        if (error.error == QJsonParseError::NoError) {
-            auto obj = document.object();
-            auto connectionArray = obj["connections"];
-            if (connectionArray.isArray()) {
-                auto selection = table->selectionModel()->selection();
-                auto selected = !selection.indexes().empty();
-                QString id = selected ? model->getId(selection.indexes().at(0).row()) : "";
-                model->updateData(connectionArray.toArray());
-                if (selected) {
-                    int row = model->getRow(id);
-                    if (row != -1) {
-                        table->selectRow(row);
-                    }
+    timer = new QTimer(this);
+    timer->start(1000);
+
+    connect(timer, &QTimer::timeout, getInstance<Clash>().api(), &Clash::RestfulApi::updateConnection);
+    connect(getInstance<Clash>().api(), &Clash::RestfulApi::connectionDataReceived, this, &ConnectionDialog::updateConnection);
+}
+
+ConnectionDialog::~ConnectionDialog() {
+    delete model;
+    delete ui;
+}
+void ConnectionDialog::updateConnection(QByteArray json) {
+    QJsonParseError error{};
+    QJsonDocument document = QJsonDocument::fromJson(json, &error);
+    if (error.error == QJsonParseError::NoError) {
+        auto obj = document.object();
+        auto connectionArray = obj["connections"];
+        if (connectionArray.isArray()) {
+            QItemSelection selection = ui->connectionTabel->selectionModel()->selection();
+            auto selected = !selection.indexes().empty();
+            QString id = selected ? model->getId(selection.indexes().at(0).row()) : "";
+            model->updateData(connectionArray.toArray());
+            if (selected) {
+                int row = model->getRow(id);
+                if (row != -1) {
+                    ui->connectionTabel->selectRow(row);
                 }
             }
-        } else {
-            qDebug() << "Fail to parse Connection Data [" + error.errorString() + "]: " + json;
         }
-    });
+    } else {
+        qDebug() << "Fail to parse Connection Data [" + error.errorString() + "]: " + json;
+    }
 }

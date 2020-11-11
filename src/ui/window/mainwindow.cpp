@@ -11,12 +11,15 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QStandardPaths>
+#include <QtGui/QDesktopServices>
 
 #include "clash/clash.h"
 #include "ui/widget/netspeedlabel.h"
 #include "ui/widget/proxygroupwidget.h"
 #include "ui/widget/proxywidget.h"
-#include "ui/window/profilemanager.h"
+#include "ui/window/connectiondialog.h"
+#include "ui/window/logdialog.h"
+#include "ui/window/profiledialog.h"
 #include "ui_mainwindow.h"
 #include "util/instance.h"
 #include "util/qtyaml.h"
@@ -51,6 +54,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(model_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), this, &MainWindow::onModeClicked);
     connect(clash.api(), &Clash::RestfulApi::configUpdate, this, &MainWindow::onConfigUpdate);
 
+    connect(ui->allowLan, &QCheckBox::clicked, this, &MainWindow::setAllowLan);
+
     loadProfiles();
     connect(getInstance<Clash>().api(), &Clash::RestfulApi::proxyDataReceived, this, &MainWindow::updateProxies);
     connect(ui->profile, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onProfileChanged);
@@ -59,12 +64,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     statusBar()->addPermanentWidget(net_speed_label);
     connect(clash.api(), &Clash::RestfulApi::trafficUpdate, net_speed_label, &NetSpeedLabel::setSpeed);
 
-    connect(ui->allowLan, &QCheckBox::clicked, this, &MainWindow::allowLan);
-
-    connect(ui->profileEdit, &QPushButton::clicked, this, &MainWindow::manageProfile);
+    connect(ui->profileEdit, &QPushButton::clicked, this, &MainWindow::showProfileDialog);
 
     connect(clash.api(), &Clash::RestfulApi::connected, this, &MainWindow::onClashStarted);
     connect(qApp, &QApplication::aboutToQuit, this, [this] { this->saveProfiles(); });
+
+    connect(ui->action_clash_folder, &QAction::triggered, this, &MainWindow::openClashFolder);
+    connect(ui->action_log, &QAction::triggered, this, &MainWindow::showLogDialog);
+    connect(ui->action_connection, &QAction::triggered, this, &MainWindow::showConnectionDialog);
 }
 
 void MainWindow::onLogLevelClicked(QAbstractButton *button) { clash.api()->patchConfig("log-level", button->objectName()); }
@@ -239,7 +246,6 @@ void MainWindow::useProfiles() {
     for (auto profile : profile_list.getList()) {
         ui->profile->addItem(profile.name);
     }
-    qDebug() << profile_list.getIndex();
     ui->profile->setCurrentIndex(profile_list.getIndex());
 }
 void MainWindow::loadProfiles() {
@@ -295,7 +301,6 @@ void MainWindow::onClashStarted() {
     clash.api()->listenTraffic();
     clash.api()->autoUpdateProxy();
     clash.api()->autoUpdateConfig();
-    qDebug() << ui->profile->currentIndex();
     // switch profile
     onProfileChanged(ui->profile->currentIndex());
 }
@@ -308,10 +313,15 @@ int getPort(QLineEdit *edit) {
 void MainWindow::sendMixedPort() { clash.api()->patchConfig("mixed-port", getPort(ui->mixedPort)); }
 void MainWindow::sendHttpPort() { clash.api()->patchConfig("port", getPort(ui->httpPort)); }
 void MainWindow::sendSocksPort() { clash.api()->patchConfig("socks-port", getPort(ui->socksPort)); }
-void MainWindow::allowLan(bool checked) { clash.api()->patchConfig("allow-lan", checked); }
+void MainWindow::setAllowLan(bool checked) { clash.api()->patchConfig("allow-lan", checked); }
 
-void MainWindow::manageProfile() {
-    ProfileManager manager(profile_list, this);
+void MainWindow::showProfileDialog() {
+    ProfileDialog manager(profile_list, this);
     manager.exec();
     useProfiles();
+}
+void MainWindow::showLogDialog() { (new LogDialog)->show(); }
+void MainWindow::showConnectionDialog() { (new ConnectionDialog)->show(); }
+void MainWindow::openClashFolder() {
+    QDesktopServices::openUrl(QUrl(QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.config/clash", QUrl::TolerantMode));
 }
