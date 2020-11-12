@@ -9,7 +9,7 @@ Clash简易客户端，提供启动clash， 管理订阅的功能
 ```shell script
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt
+cmake .. -DCMAKE_BUILD_TYPE=Release
 sudo make install
 ```
 It will install into /opt/clash-qt
