@@ -78,7 +78,7 @@ bool Clash::checkFiles() {
         }
     }
 
-    QFile geo_file(clash_dir + "/Country.mmdb.");
+    QFile geo_file(clash_dir + "/Country.mmdb");
     if (!geo_file.exists()) {
         qDebug() << "Clash Country.mmdb file not exist.";
         QString geo_file_path = QStandardPaths::locate(QStandardPaths::AppDataLocation, "Country.mmdb", QStandardPaths::LocateFile);
@@ -87,7 +87,7 @@ bool Clash::checkFiles() {
             qDebug() << "Failed to find default Country.mmdb.";
             return false;
         }
-        if (!QFile::copy(QApplication::applicationDirPath() + "../share/clash-qt/Country.mmdb", QFileInfo(geo_file).filePath())) {
+        if (!QFile::copy(geo_file_path, clash_dir + "/Country.mmdb")) {
             qDebug() << "Failed to copy default GEO file.";
             return false;
         }
