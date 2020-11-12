@@ -1,6 +1,4 @@
 #include <QApplication>
-#include <QDir>
-#include <QStandardPaths>
 #include <csignal>
 
 #include "clash/clash.h"
@@ -19,14 +17,9 @@ int main(int argc, char *argv[]) {
 
     signal(SIGINT, signalhandler);
 
-    a.setApplicationName("Clash-Qt");
+    a.setApplicationName("clash-qt");
     a.setWindowIcon(QIcon(":/icon/clash.png"));
     a.setQuitOnLastWindowClosed(false);
-
-    QFile styleFile(":/style.qss");
-    styleFile.open(QIODevice::ReadOnly);
-    QString style = styleFile.readAll();
-    a.setStyleSheet(style);
 
     getInstance<MainWindow>();
     getInstance<Tray>().show();

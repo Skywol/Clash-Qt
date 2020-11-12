@@ -19,8 +19,8 @@ find_package(yaml-cpp CONFIG REQUIRED)
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
-file(COPY default/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/default/)
-file(COPY res/clash DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+file(COPY res/default/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/res/)
+file(COPY res/bin/clash DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 
 include_directories(src)
 
@@ -35,6 +35,7 @@ target_link_libraries(clash-qt
         yaml-cpp
         )
 
-install(TARGETS clash-qt DESTINATION clash-qt/)
-install(PROGRAMS res/clash DESTINATION clash-qt/)
-install(DIRECTORY default DESTINATION clash-qt/default)
+install(TARGETS clash-qt DESTINATION bin)
+install(PROGRAMS res/bin/clash DESTINATION bin)
+install(FILES res/icon/clash.png DESTINATION share/clash-qt)
+install(DIRECTORY res/default/ DESTINATION share/clash-qt)
