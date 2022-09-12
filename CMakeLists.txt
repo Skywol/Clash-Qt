@@ -13,7 +13,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Network)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Gui Widgets Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets Network)
 find_package(yaml-cpp CONFIG REQUIRED)
 
 
@@ -30,13 +31,20 @@ set(res_files res/res.qrc)
 
 add_executable(clash-qt ${src_files} ${res_files})
 
-target_link_libraries(clash-qt
-        Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network
-        yaml-cpp
-        )
+target_link_libraries(clash-qt Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network yaml-cpp)
 
-install(TARGETS clash-qt DESTINATION bin)
-install(PROGRAMS res/bin/clash DESTINATION bin)
-install(FILES res/icon/clash.png DESTINATION share/clash-qt)
-install(DIRECTORY res/default/ DESTINATION share/clash-qt)
-install(FILES res/clash-qt.desktop DESTINATION share/applications)
+#install(TARGETS clash-qt DESTINATION bin)
+#install(PROGRAMS res/bin/clash DESTINATION bin)
+#install(FILES res/icon/clash.png DESTINATION share/clash-qt)
+#install(DIRECTORY res/default/ DESTINATION share/clash-qt)
+#install(FILES res/clash-qt.desktop DESTINATION share/applications)
+
+set_target_properties(clash-qt PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE TRUE
+    WIN32_EXECUTABLE TRUE
+)
+install(TARGETS clash-qt
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
